@@ -357,6 +357,12 @@ TEST(TripleTest, ParsedIDs) {
   EXPECT_EQ(Triple::Haiku, T.getOS());
   EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
 
+  T = Triple("mcs51-unknown-unknown");
+  EXPECT_EQ(Triple::mcs51, T.getArch());
+  EXPECT_EQ(Triple::UnknownVendor, T.getVendor());
+  EXPECT_EQ(Triple::UnknownOS, T.getOS());
+  EXPECT_EQ(Triple::UnknownEnvironment, T.getEnvironment());
+
   T = Triple("mips-mti-linux-gnu");
   EXPECT_EQ(Triple::mips, T.getArch());
   EXPECT_EQ(Triple::MipsTechnologies, T.getVendor());
@@ -781,6 +787,11 @@ TEST(TripleTest, BitWidthPredicates) {
   T.setArch(Triple::hexagon);
   EXPECT_FALSE(T.isArch16Bit());
   EXPECT_TRUE(T.isArch32Bit());
+  EXPECT_FALSE(T.isArch64Bit());
+
+  T.setArch(Triple::mcs51);
+  EXPECT_TRUE(T.isArch16Bit());
+  EXPECT_FALSE(T.isArch32Bit());
   EXPECT_FALSE(T.isArch64Bit());
 
   T.setArch(Triple::mips);
