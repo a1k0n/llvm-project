@@ -24,6 +24,9 @@ include "MCS51InstrInfo.td"
 
 def MCS51InstrInfo : InstrInfo;
 
+def MCS51AsmParser : AsmParser {
+}
+
 //===----------------------------------------------------------------------===//
 // 8051 processors supported.
 //===----------------------------------------------------------------------===//
@@ -36,5 +39,6 @@ def : ProcessorModel<"generic-8051", NoSchedModel, []>;
 
 def MCS51 : Target {
   let InstructionSet = MCS51InstrInfo;
+  let AssemblyParsers = [MCS51AsmParser];
 }
 
