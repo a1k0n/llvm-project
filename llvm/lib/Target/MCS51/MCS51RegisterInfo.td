@@ -40,9 +40,12 @@ let SubRegIndices = [SubRegIndex<8>, SubRegIndex<8, 8>], CoveredBySubRegs = 1 in
 // reflecting the preferred register allocation sequence.
 
 def GPR8 : RegisterClass<"MCS51", [i8], 8,
-  (add A, R0, R1, R2, R3, R4, R5, R6, R7, B, DPL, DPH)>;
+  (add R0, R1, R2, R3, R4, R5, R6, R7, DPL, DPH, B, A)>;
 
-def PTR16: RegisterClass<"MCS51", [i16], 8,
-  (add DPTR)>;
+// the accumulator is in its own class
+def AREG : RegisterClass<"MCS51", [i8], 8, (add A)>;
+
+// as is DPTR
+def PTR16: RegisterClass<"MCS51", [i16], 8, (add DPTR)>;
 
 
