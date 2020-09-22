@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "TargetInfo/MCS51TargetInfo.h"
 #include "llvm/Support/TargetRegistry.h"
-using namespace llvm;
 
 namespace llvm {
 Target &getTheMCS51Target() {
@@ -17,7 +17,7 @@ Target &getTheMCS51Target() {
 }
 }
 
-extern "C" void LLVMInitializeMCS51TargetInfo() {
-  RegisterTarget<Triple::mcs51> X(getTheMCS51Target(),
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMCS51TargetInfo() {
+  llvm::RegisterTarget<llvm::Triple::mcs51> X(llvm::getTheMCS51Target(),
       "mcs51", "MCS51/8051 Family", "MCS51");
 }

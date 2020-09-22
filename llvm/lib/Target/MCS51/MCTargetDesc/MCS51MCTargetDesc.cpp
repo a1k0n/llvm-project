@@ -26,6 +26,9 @@
 #define GET_INSTRINFO_MC_DESC
 #include "MCS51GenInstrInfo.inc"
 
+#define GET_SUBTARGETINFO_MC_DESC
+#include "MCS51GenSubtargetInfo.inc"
+
 #define GET_REGINFO_MC_DESC
 #include "MCS51GenRegisterInfo.inc"
 
@@ -43,11 +46,17 @@ static MCRegisterInfo *createMCS51MCRegisterInfo(const Triple &TT) {
   return X;
 }
 
+static MCSubtargetInfo *createMCS51SubtargetInfo(const Triple &TT,
+StringRef CPU, StringRef FS) {
+  return createMCS51MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
+}
+
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMCS51TargetMC() {
   Target &T = getTheMCS51Target();
   RegisterMCAsmInfo<MCS51MCAsmInfo> X(T);
   TargetRegistry::RegisterMCInstrInfo(T, createMCS51MCInstrInfo);
   TargetRegistry::RegisterMCRegInfo(T, createMCS51MCRegisterInfo);
-  TargetRegistry::RegisterMCAsmBackend(T, createMCS51AsmBackend);
   TargetRegistry::RegisterMCCodeEmitter(T, createMCS51MCCodeEmitter);
+  TargetRegistry::RegisterMCAsmBackend(T, createMCS51AsmBackend);
+  TargetRegistry::RegisterMCSubtargetInfo(T, createMCS51SubtargetInfo);
 }

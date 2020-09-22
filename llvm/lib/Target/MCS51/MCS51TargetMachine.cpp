@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCS51TargetMachine.h"
+#include "TargetInfo/MCS51TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
