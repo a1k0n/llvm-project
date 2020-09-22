@@ -1,0 +1,12 @@
+#ifndef LLVM_LIB_TARGET_MCS51_TARGETINFO_MCS51TARGETINFO_H
+#define LLVM_LIB_TARGET_MCS51_TARGETINFO_MCS51TARGETINFO_H
+
+namespace llvm {
+
+class Target;
+
+Target &getTheMCS51Target();
+
+} // namespace llvm
+
+#endif // LLVM_LIB_TARGET_MCS51_TARGETINFO_MCS51TARGETINFO_H

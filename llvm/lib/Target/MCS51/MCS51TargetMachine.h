@@ -15,6 +15,7 @@
 
 #include <memory>
 
+#include "MCTargetDesc/MCS51MCTargetDesc.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
@@ -35,8 +36,6 @@ class MCS51TargetMachine : public LLVMTargetMachine {
     return TLOF.get();
   }
 };
-
-Target &getTheMCS51Target();
 
 }  // namespace llvm
 
