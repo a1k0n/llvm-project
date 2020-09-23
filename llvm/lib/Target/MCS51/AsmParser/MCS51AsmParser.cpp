@@ -296,10 +296,17 @@ OperandMatchResultTy MCS51AsmParser::parseRegister(OperandVector &Operands) {
     StringRef Name = getLexer().getTok().getIdentifier();
     unsigned RegNo = MatchRegisterName(Name);
     if (RegNo == 0) {
-      return MatchOperand_NoMatch;
+      MatchClassKind kind = matchTokenString(Name);
+      if (kind == InvalidMatchClass) {
+        return MatchOperand_NoMatch;
+      }
+      getLexer().Lex();
+      Operands.push_back(MCS51Operand::createToken(Name, S));
+    } else {
+      getLexer().Lex();
+      Operands.push_back(MCS51Operand::createReg(RegNo, S, E));
     }
-    getLexer().Lex();
-    Operands.push_back(MCS51Operand::createReg(RegNo, S, E));
+    break;
   }
   return MatchOperand_Success;
 }

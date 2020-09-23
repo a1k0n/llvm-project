@@ -79,6 +79,7 @@ void MCS51MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
   while (Size > 0) {
     OS.write(BinaryOpCode & 0xff);
     BinaryOpCode >>= 8;
+    Size--;
   }
   ++MCNumEmitted; // Keep track of the # of mi's emitted.
 }

@@ -9,6 +9,9 @@ class MCS51Reg<bits<4> num, bits<8> memaddr, string name, list<Register> subregs
   let SubRegs = subregs;
   let AltNames = altNames;
 }
+
+def PC : Register<"PC">;
+
 }  // Namespace = "MCS51"
 
 def R0 : MCS51Reg<0, 0, "R0", [], []>, DwarfRegNum<[0]>;
@@ -20,7 +23,7 @@ def R5 : MCS51Reg<5, 5, "R5", [], []>, DwarfRegNum<[5]>;
 def R6 : MCS51Reg<6, 6, "R6", [], []>, DwarfRegNum<[6]>;
 def R7 : MCS51Reg<7, 7, "R7", [], []>, DwarfRegNum<[7]>;
 
-def A : MCS51Reg<8, 0xe0, "A", [], ["ACC"]>, DwarfRegNum<[8]>;
+def A : MCS51Reg<8, 0xe0, "A", [], []>, DwarfRegNum<[8]>;
 def B : MCS51Reg<9, 0xf0, "B", [], []>, DwarfRegNum<[9]>;
 def PSW : MCS51Reg<10, 0xd0, "PSW", [], []>, DwarfRegNum<[10]>;
 
@@ -39,13 +42,16 @@ let SubRegIndices = [SubRegIndex<8>, SubRegIndex<8, 8>], CoveredBySubRegs = 1 in
 // TODO: once codegen is implemented, registers should be listed in an order
 // reflecting the preferred register allocation sequence.
 
-def GPR8 : RegisterClass<"MCS51", [i8], 8,
-  (add R0, R1, R2, R3, R4, R5, R6, R7, DPL, DPH, B, A)>;
+def GPRn : RegisterClass<"MCS51", [i8], 8,
+  (add R0, R1, R2, R3, R4, R5, R6, R7)>;
+
+def GPRi : RegisterClass<"MCS51", [i8], 8,
+  (add R0, R1)>;
 
 // the accumulator is in its own class
 def AREG : RegisterClass<"MCS51", [i8], 8, (add A)>;
 
 // as is DPTR
-def PTR16: RegisterClass<"MCS51", [i16], 8, (add DPTR)>;
+def DPTRREG : RegisterClass<"MCS51", [i16], 8, (add DPTR)>;
 
 

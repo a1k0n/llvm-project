@@ -42,7 +42,7 @@ static MCInstrInfo *createMCS51MCInstrInfo() {
 
 static MCRegisterInfo *createMCS51MCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitMCS51MCRegisterInfo(X, MCS51::A);
+  InitMCS51MCRegisterInfo(X, MCS51::PC);
   return X;
 }
 
