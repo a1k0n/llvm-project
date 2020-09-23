@@ -26,3 +26,11 @@ LJMP 0x1234
 RET
 # CHECK: RET        ; encoding: [0x22]
 
+MOV A, #0x12
+# CHECK: MOV A, #18  ; encoding: [0x74,0x12]
+XRL A, #0x80
+# CHECK: XRL A, #128 ; encoding: [0x64,0x80]
+ORL A, #1
+# CHECK: ORL A, #1   ; encoding: [0x44,0x01]
+XCH A, R7
+# CHECK: XCH A, R7   ; encoding: [0xcf]

@@ -48,10 +48,14 @@ let Defs = [PSW], Constraints = "$dst = $ra" in {
      "ADDC", "$ra, $rn", [(set AREG:$dst, (addc AREG:$ra, GPRn:$rn))]>;
     def ADDCARi : MCS51InstRi<3, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
      "ADDC", "$ra, @$ri", [(store AREG:$dst, (addc AREG:$ra, (load GPRi:$ri)))]>;
+    def ADDCAimm8 : MCS51InstImm8<3, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
+     "ADDC", "$ra, #$imm8", [(set AREG:$dst, (addc AREG:$ra, imm8:$imm8))]>;
     def SUBBARn : MCS51InstRn<9, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
      "SUBB", "$ra, $rn", [(set AREG:$dst, (subc AREG:$ra, GPRn:$rn))]>;
     def SUBBARi : MCS51InstRi<9, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
      "SUBB", "$ra, @$ri", [(store AREG:$dst, (subc AREG:$ra, (load GPRi:$ri)))]>;
+    def SUBBAimm8 : MCS51InstImm8<9, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
+     "SUBB", "$ra, #$imm8", [(set AREG:$dst, (subc AREG:$ra, imm8:$imm8))]>;
 }
 
 let Constraints = "$dst = $ra" in {
@@ -59,14 +63,20 @@ let Constraints = "$dst = $ra" in {
      "ORL", "$ra, $rn", [(set AREG:$dst, (or AREG:$ra, GPRn:$rn))]>;
     def ORLARi  : MCS51InstRi<4, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
      "ORL", "$ra, @$ri", [(set AREG:$dst, (or AREG:$ra, (load GPRi:$ri)))]>;
+    def ORLAimm8 : MCS51InstImm8<4, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
+     "ORL", "$ra, #$imm8", [(set AREG:$dst, (or AREG:$ra, imm8:$imm8))]>;
     def ANLARn  : MCS51InstRn<5, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
      "ANL", "$ra, $rn", [(set AREG:$dst, (and AREG:$ra, GPRn:$rn))]>;
     def ANLARi  : MCS51InstRi<5, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
      "ANL", "$ra, @$ri", [(set AREG:$dst, (and AREG:$ra, (load GPRi:$ri)))]>;
+    def ANLAimm8 : MCS51InstImm8<4, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
+     "ANL", "$ra, #$imm8", [(set AREG:$dst, (and AREG:$ra, imm8:$imm8))]>;
     def XRLARn  : MCS51InstRn<6, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
      "XRL", "$ra, $rn", [(set AREG:$dst, (xor AREG:$ra, GPRn:$rn))]>;
     def XRLARi  : MCS51InstRi<6, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
      "XRL", "$ra, @$ri", [(set AREG:$dst, (xor AREG:$ra, (load GPRi:$ri)))]>;
+    def XRLAimm8 : MCS51InstImm8<6, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
+     "XRL", "$ra, #$imm8", [(set AREG:$dst, (xor AREG:$ra, imm8:$imm8))]>;
 }
 
 // FIXME: pattern for swapping A, Rn?
@@ -75,6 +85,8 @@ let Constraints = "$t1 = $ra, $t2 = $rn" in {
     "XCH", "$ra, $rn", []>;
 }
 
+def MOVAimm8 : MCS51InstImm8<0x7, (outs AREG:$ra), (ins imm8:$imm8),
+ "MOV", "$ra, #$imm8", [(set AREG:$ra, imm8:$imm8)]>;
 def MOVARn  : MCS51InstRn<0xE, (outs AREG:$ra), (ins GPRn:$rn),
  "MOV", "$ra, $rn", [(set AREG:$ra, GPRn:$rn)]>;
 def MOVRnA  : MCS51InstRn<0xF, (outs GPRn:$rn), (ins AREG:$ra),
