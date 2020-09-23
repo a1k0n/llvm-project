@@ -17,6 +17,20 @@ class MCS51Inst8<dag outs, dag ins, string opcodestr, string argstr, list<dag> p
   let Size = 1;
 }
 
+class MCS51InstAddr16<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                 : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
+  field bits<24> Inst;
+  bits<16> addr16;
+  let Size = 3;
+
+  // immediate addresses are in big endian order, but the rest of the CPU acts
+  // like little-endian ... so I've opted to tell LLVM it's little-endian and
+  // will swap these here.
+  let Inst{7-0} = op;
+  let Inst{15-8} = addr16{15-8};
+  let Inst{23-16} = addr16{7-0};
+}
+
 class MCS51InstNoArgs<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : MCS51Inst8<outs, ins, opcodestr, argstr, pattern> {
   let Inst = op;
