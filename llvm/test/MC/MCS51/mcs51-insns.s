@@ -17,6 +17,8 @@ MOV  R2, A
 # CHECK: MOV  R2, A ; encoding: [0xfa]
 MOV  A, R3
 # CHECK: MOV  A, R3 ; encoding: [0xeb]
+INC  R0
+# CHECK: INC  R0    ; encoding: [0x08]
 INC  @R0
 # CHECK: INC  @R0   ; encoding: [0x06]
 NOP
@@ -34,3 +36,11 @@ ORL A, #1
 # CHECK: ORL A, #1   ; encoding: [0x44,0x01]
 XCH A, R7
 # CHECK: XCH A, R7   ; encoding: [0xcf]
+INC 0x45
+# CHECK: INC 69      ; encoding: [0x05,0x45]
+DEC 0x80
+# CHECK: DEC 128     ; encoding: [0x15,0x80]
+XRL A, 0x45
+# CHECK: XRL A, 69   ; encoding: [0x65,0x45]
+XRL A, @R1
+# CHECK: XRL A, @R1  ; encoding: [0x67]
