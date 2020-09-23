@@ -19,7 +19,7 @@ void MCS51MCAsmInfo::anchor() {}
 
 MCS51MCAsmInfo::MCS51MCAsmInfo(const Triple &TT, const MCTargetOptions &Options) {
   CodePointerSize = CalleeSaveStackSlotSize = 2;
-  CommentString = "#";
+  CommentString = ";";  // need to use #imm8, so comments need to be ; instead
   // AlignmentIsInBytes = true; ??
   PrivateGlobalPrefix = ".L";
   PrivateLabelPrefix = ".L";

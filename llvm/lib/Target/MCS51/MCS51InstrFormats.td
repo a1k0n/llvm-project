@@ -31,6 +31,17 @@ class MCS51InstAddr16<bits<8> op, dag outs, dag ins, string opcodestr, string ar
   let Inst{23-16} = addr16{7-0};
 }
 
+class MCS51InstImm8<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                 : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
+  field bits<16> Inst;
+  bits<8> imm8;
+  let Size = 2;
+
+  let Inst{7-4} = ophi;
+  let Inst{3-0} = 4;
+  let Inst{15-8} = imm8;
+}
+
 class MCS51InstNoArgs<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : MCS51Inst8<outs, ins, opcodestr, argstr, pattern> {
   let Inst = op;

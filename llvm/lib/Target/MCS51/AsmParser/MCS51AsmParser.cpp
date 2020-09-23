@@ -292,8 +292,10 @@ OperandMatchResultTy MCS51AsmParser::parseRegister(OperandVector &Operands) {
   default:
     dbgs() << "unhandled lexer kind -> " << getLexer().getKind() << "\n";
     return MatchOperand_NoMatch;
-  case AsmToken::At:  // handle @Ri, etc.
-    Operands.push_back(MCS51Operand::createToken("@", S));
+  case AsmToken::Hash:  // handle #imm, @Ri, etc.
+  case AsmToken::At:
+    Operands.push_back(
+        MCS51Operand::createToken(getLexer().getTok().getString(), S));
     getLexer().Lex();
     return parseRegister(Operands);
   case AsmToken::Identifier:

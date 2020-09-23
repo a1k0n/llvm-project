@@ -1,6 +1,11 @@
 include "MCS51InstrFormats.td"
 
-def imm16 : Operand<i16> {
+def addr16 : Operand<i16> {
+    // FIXME: address printing should be in hex or label-relative
+}
+
+def imm8 : Operand<i8> {
+    // also hex?
 }
 
 def NOP : MCS51InstNoArgs<0, (outs), (ins), "NOP", "", []>;
@@ -8,6 +13,10 @@ def NOP : MCS51InstNoArgs<0, (outs), (ins), "NOP", "", []>;
 def RET : MCS51InstNoArgs<0x22, (outs), (ins), "RET", "", []>;
 def RETI : MCS51InstNoArgs<0x32, (outs), (ins), "RETI", "", []>;
 
+let Constraints = "$dst = $ra" in {
+    def INCA : MCS51InstNoArgs<0x04, (outs AREG:$dst), (ins AREG:$ra),
+     "INC", "$ra", [(set AREG:$dst, (add AREG:$ra, 1))]>;
+}
 def CLRA : MCS51InstNoArgs<0xE4, (outs AREG:$ra), (ins), "CLR", "$ra", [(set AREG:$ra, 0)]>;
 
 let Constraints = "$dst = $rn" in {
@@ -32,6 +41,8 @@ let Defs = [PSW], Constraints = "$dst = $ra" in {
      "ADD", "$ra, $rn", [(set AREG:$dst, (add AREG:$ra, GPRn:$rn))]>;
     def ADDARi  : MCS51InstRi<2, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
      "ADD", "$ra, @$ri", [(store AREG:$dst, (add AREG:$ra, (load GPRi:$ri)))]>;
+    def ADDAimm8 : MCS51InstImm8<2, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
+     "ADD", "$ra, #$imm8", [(set AREG:$dst, (add AREG:$ra, imm8:$imm8))]>;
     // FIXME: carry / borrow -- are addc and subc correct here?
     def ADDCARn : MCS51InstRn<3, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
      "ADDC", "$ra, $rn", [(set AREG:$dst, (addc AREG:$ra, GPRn:$rn))]>;
@@ -69,4 +80,4 @@ def MOVARn  : MCS51InstRn<0xE, (outs AREG:$ra), (ins GPRn:$rn),
 def MOVRnA  : MCS51InstRn<0xF, (outs GPRn:$rn), (ins AREG:$ra),
  "MOV", "$rn, $ra", [(set GPRn:$rn, AREG:$ra)]>;
 
-def LJMP : MCS51InstAddr16<0x02, (outs), (ins imm16:$addr16), "LJMP", "$addr16", []>;
+def LJMP : MCS51InstAddr16<0x02, (outs), (ins addr16:$addr16), "LJMP", "$addr16", []>;
