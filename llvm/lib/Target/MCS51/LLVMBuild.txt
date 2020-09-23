@@ -15,16 +15,18 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = AsmParser TargetInfo MCTargetDesc
+subdirectories = AsmParser MCTargetDesc TargetInfo
 
 [component_0]
 type = TargetGroup
 name = MCS51
 parent = Target
+has_asmparser = 1
+has_asmprinter = 1
 
 [component_1]
 type = Library
 name = MCS51CodeGen
 parent = MCS51
-required_libraries = Core CodeGen MCS51Info Support Target
+required_libraries = AsmPrinter Core CodeGen MC MCS51Desc MCS51Info Support Target
 add_to_library_groups = MCS51

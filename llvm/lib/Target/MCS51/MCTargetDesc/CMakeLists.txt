@@ -4,5 +4,6 @@ add_llvm_library(LLVMMCS51Desc
   MCS51MCAsmInfo.cpp
   MCS51MCTargetDesc.cpp
   MCS51MCCodeEmitter.cpp
+  MCS51InstPrinter.cpp
 )
 

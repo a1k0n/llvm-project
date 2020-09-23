@@ -13,6 +13,7 @@
 
 #include "TargetInfo/MCS51TargetInfo.h"
 #include "MCS51MCTargetDesc.h"
+#include "MCS51InstPrinter.h"
 #include "MCS51MCAsmInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -51,12 +52,22 @@ StringRef CPU, StringRef FS) {
   return createMCS51MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
 }
 
+static MCInstPrinter *createMCS51MCInstPrinter(const Triple &T,
+                                               unsigned SyntaxVariant,
+                                               const MCAsmInfo &MAI,
+                                               const MCInstrInfo &MII,
+                                               const MCRegisterInfo &MRI) {
+  return new MCS51InstPrinter(MAI, MII, MRI);
+}
+
+
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMCS51TargetMC() {
   Target &T = getTheMCS51Target();
   RegisterMCAsmInfo<MCS51MCAsmInfo> X(T);
+  TargetRegistry::RegisterMCSubtargetInfo(T, createMCS51SubtargetInfo);
   TargetRegistry::RegisterMCInstrInfo(T, createMCS51MCInstrInfo);
   TargetRegistry::RegisterMCRegInfo(T, createMCS51MCRegisterInfo);
-  TargetRegistry::RegisterMCCodeEmitter(T, createMCS51MCCodeEmitter);
   TargetRegistry::RegisterMCAsmBackend(T, createMCS51AsmBackend);
-  TargetRegistry::RegisterMCSubtargetInfo(T, createMCS51SubtargetInfo);
+  TargetRegistry::RegisterMCCodeEmitter(T, createMCS51MCCodeEmitter);
+  TargetRegistry::RegisterMCInstPrinter(T, createMCS51MCInstPrinter);
 }
