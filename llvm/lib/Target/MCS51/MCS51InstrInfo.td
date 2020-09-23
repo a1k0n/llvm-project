@@ -9,24 +9,28 @@ def imm8 : Operand<i8> {
 }
 
 def direct : Operand<i8> {
-    // TODO: custom parser / printer for register locations in RAM
+    // TODO: custom parser / printer for register locations in RAM, and if
+    // operand is >= 0x80, SFRs
 }
 
-def NOP : MCS51InstNoArgs<0, (outs), (ins), "NOP", "", []>;
-// what pattern would we use for RET?
-def RET : MCS51InstNoArgs<0x22, (outs), (ins), "RET", "", []>;
-def RETI : MCS51InstNoArgs<0x32, (outs), (ins), "RETI", "", []>;
+def NOP : InstNoArgs<0, (outs), (ins), "NOP", "", []>;
 
-let Constraints = "$dst = $ra" in {
-    def INCA : MCS51InstNoArgs<0x04, (outs AREG:$dst), (ins AREG:$ra),
-     "INC", "$ra", [(set AREG:$dst, (add AREG:$ra, 1))]>;
+def RET  : InstNoArgs<0x22, (outs), (ins), "RET",  "", []>;
+def RETI : InstNoArgs<0x32, (outs), (ins), "RETI", "", []>;
+
+let Uses = [ACC], Defs = [ACC] in {
+    def INCA : InstNoArgs<0x04, (outs), (ins),
+     "INC", "A", [(set ACC, (add ACC, 1))]>;
 }
-def CLRA : MCS51InstNoArgs<0xE4, (outs AREG:$ra), (ins), "CLR", "$ra", [(set AREG:$ra, 0)]>;
+
+let Defs = [ACC] in {
+    def CLRA : InstNoArgs<0xE4, (outs), (ins), "CLR", "A", [(set ACC, 0)]>;
+}
 
 let Constraints = "$dst = $rn" in {
-    def INCRn : MCS51InstRn<0, (outs GPRn:$dst), (ins GPRn:$rn),
+    def INCRn : InsARn<0, (outs GPRn:$dst), (ins GPRn:$rn),
      "INC", "$rn", [(set GPRn:$dst, (add GPRn:$rn, 1))]>;
-    def DECRn : MCS51InstRn<1, (outs GPRn:$dst), (ins GPRn:$rn),
+    def DECRn : InsARn<1, (outs GPRn:$dst), (ins GPRn:$rn),
      "DEC", "$rn", [(set GPRn:$dst, (sub GPRn:$rn, 1))]>;
 }
 
@@ -34,84 +38,49 @@ let Constraints = "$dst = $ri" in {
     // not sure if the load/store patterns here are correct, as they lack
     // address spaces, but these are specifically address space 0 (indirect
     // access to internal RAM, not SFRs) which is the default
-    def INCRi : MCS51InstRi<0, (outs GPRi:$dst), (ins GPRi:$ri),
+    def INCRi : InsARi<0, (outs GPRi:$dst), (ins GPRi:$ri),
      "INC", "@$ri", [(store GPRi:$dst, (add (load GPRi:$ri), 1))]>;
-    def DECRi : MCS51InstRi<1, (outs GPRi:$dst), (ins GPRi:$ri),
+    def DECRi : InsARi<1, (outs GPRi:$dst), (ins GPRi:$ri),
      "DEC", "@$ri", [(store GPRi:$dst, (sub (load GPRi:$ri), 1))]>;
 }
 
-def INCDir : MCS51InstDir8<0, (outs), (ins direct:$a8),
+def INCDir : InsDir8<0, (outs), (ins direct:$a8),
  "INC", "$a8", [(store direct:$a8, (add (load direct:$a8), 1))]>;
-def DECDir : MCS51InstDir8<1, (outs), (ins direct:$a8),
+def DECDir : InsDir8<1, (outs), (ins direct:$a8),
  "DEC", "$a8", [(store direct:$a8, (sub (load direct:$a8), 1))]>;
 
-let Defs = [PSW], Constraints = "$dst = $ra" in {
-    def ADDARn  : MCS51InstRn<2, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
-     "ADD", "$ra, $rn", [(set AREG:$dst, (add AREG:$ra, GPRn:$rn))]>;
-    def ADDARi  : MCS51InstRi<2, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
-     "ADD", "$ra, @$ri", [(store AREG:$dst, (add AREG:$ra, (load GPRi:$ri)))]>;
-    def ADDAimm8 : MCS51InstImm8<2, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
-     "ADD", "$ra, #$imm8", [(set AREG:$dst, (add AREG:$ra, imm8:$imm8))]>;
-    def ADDAdir8 : MCS51InstDir8<2, (outs AREG:$dst), (ins AREG:$ra, direct:$a8),
-     "ADD", "$ra, $a8", [(set AREG:$dst, (add AREG:$ra, (load direct:$a8)))]>;
-    // FIXME: carry / borrow -- are addc and subc correct here?
-    def ADDCARn : MCS51InstRn<3, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
-     "ADDC", "$ra, $rn", [(set AREG:$dst, (addc AREG:$ra, GPRn:$rn))]>;
-    def ADDCARi : MCS51InstRi<3, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
-     "ADDC", "$ra, @$ri", [(store AREG:$dst, (addc AREG:$ra, (load GPRi:$ri)))]>;
-    def ADDCAimm8 : MCS51InstImm8<3, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
-     "ADDC", "$ra, #$imm8", [(set AREG:$dst, (addc AREG:$ra, imm8:$imm8))]>;
-    def ADDCAdir8 : MCS51InstDir8<3, (outs AREG:$dst), (ins AREG:$ra, direct:$a8),
-     "ADDC", "$ra, $a8", [(set AREG:$dst, (addc AREG:$ra, (load direct:$a8)))]>;
-    def SUBBARn : MCS51InstRn<9, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
-     "SUBB", "$ra, $rn", [(set AREG:$dst, (subc AREG:$ra, GPRn:$rn))]>;
-    def SUBBARi : MCS51InstRi<9, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
-     "SUBB", "$ra, @$ri", [(store AREG:$dst, (subc AREG:$ra, (load GPRi:$ri)))]>;
-    def SUBBAimm8 : MCS51InstImm8<9, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
-     "SUBB", "$ra, #$imm8", [(set AREG:$dst, (subc AREG:$ra, imm8:$imm8))]>;
-    def SUBBAdir8 : MCS51InstDir8<9, (outs AREG:$dst), (ins AREG:$ra, direct:$a8),
-     "SUBB", "$ra, $a8", [(set AREG:$dst, (subc AREG:$ra, (load direct:$a8)))]>;
+multiclass alu_inst<bits<4> opc, string mnemonic, dag op> {
+    def _ARn : InsARn<opc, (outs), (ins GPRn:$rn), mnemonic, "A, $rn", [(set ACC, (op ACC, GPRn:$rn))]>;
+    def _ARi : InsARi<opc, (outs), (ins GPRi:$ri), mnemonic, "A, @$ri", [(set ACC, (op ACC, GPRi:$ri))]>;
+    def _Aimm8 : InsImm8<opc, (outs), (ins imm8:$imm8), mnemonic, "A, #$imm8", [(set ACC, (op ACC, imm8:$imm8))]>;
+    def _Adir8 : InsDir8<opc, (outs), (ins direct:$a8), mnemonic, "A, $a8", [(set ACC, (op ACC, (load direct:$a8)))]>;
 }
 
-let Constraints = "$dst = $ra" in {
-    def ORLARn  : MCS51InstRn<4, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
-     "ORL", "$ra, $rn", [(set AREG:$dst, (or AREG:$ra, GPRn:$rn))]>;
-    def ORLARi  : MCS51InstRi<4, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
-     "ORL", "$ra, @$ri", [(set AREG:$dst, (or AREG:$ra, (load GPRi:$ri)))]>;
-    def ORLAimm8 : MCS51InstImm8<4, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
-     "ORL", "$ra, #$imm8", [(set AREG:$dst, (or AREG:$ra, imm8:$imm8))]>;
-    def ORLAdir8 : MCS51InstDir8<4, (outs AREG:$dst), (ins AREG:$ra, direct:$a8),
-     "ORL", "$ra, $a8", [(set AREG:$dst, (or AREG:$ra, (load direct:$a8)))]>;
-    def ANLARn  : MCS51InstRn<5, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
-     "ANL", "$ra, $rn", [(set AREG:$dst, (and AREG:$ra, GPRn:$rn))]>;
-    def ANLARi  : MCS51InstRi<5, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
-     "ANL", "$ra, @$ri", [(set AREG:$dst, (and AREG:$ra, (load GPRi:$ri)))]>;
-    def ANLAimm8 : MCS51InstImm8<5, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
-     "ANL", "$ra, #$imm8", [(set AREG:$dst, (and AREG:$ra, imm8:$imm8))]>;
-    def ANLAdir8 : MCS51InstDir8<5, (outs AREG:$dst), (ins AREG:$ra, direct:$a8),
-     "ANL", "$ra, $a8", [(set AREG:$dst, (and AREG:$ra, (load direct:$a8)))]>;
-    def XRLARn  : MCS51InstRn<6, (outs AREG:$dst), (ins AREG:$ra, GPRn:$rn),
-     "XRL", "$ra, $rn", [(set AREG:$dst, (xor AREG:$ra, GPRn:$rn))]>;
-    def XRLARi  : MCS51InstRi<6, (outs AREG:$dst), (ins AREG:$ra, GPRi:$ri),
-     "XRL", "$ra, @$ri", [(set AREG:$dst, (xor AREG:$ra, (load GPRi:$ri)))]>;
-    def XRLAimm8 : MCS51InstImm8<6, (outs AREG:$dst), (ins AREG:$ra, imm8:$imm8),
-     "XRL", "$ra, #$imm8", [(set AREG:$dst, (xor AREG:$ra, imm8:$imm8))]>;
-    def XRLAdir8 : MCS51InstDir8<6, (outs AREG:$dst), (ins AREG:$ra, direct:$a8),
-     "XRL", "$ra, $a8", [(set AREG:$dst, (xor AREG:$ra, (load direct:$a8)))]>;
+let Uses = [ACC], Defs = [ACC, PSW] in {
+    defm ADD  : alu_inst<2, "ADD",  add>;
+    defm ADDC : alu_inst<3, "ADDC", addc>;
+    defm SUBB : alu_inst<9, "SUBB", subc>;
+}
+
+let Uses = [ACC], Defs = [ACC] in {
+    defm ORL : alu_inst<4, "ORL", or>;
+    defm ANL : alu_inst<5, "ANL", and>;
+    defm XRL : alu_inst<6, "XRL", xor>;
 }
 
 // FIXME: pattern for swapping A, Rn?
-let Constraints = "$t1 = $ra, $t2 = $rn" in {
-    def XCHARn  : MCS51InstRn<0xC, (outs AREG:$t1, GPRn:$t2), (ins AREG:$ra, GPRn:$rn),
-    "XCH", "$ra, $rn", []>;
+let Constraints = "$tmp = $rn" in {
+    def XCHARn  : InsARn<0xC, (outs GPRn:$tmp), (ins GPRn:$rn),
+    "XCH", "A, $rn", []>;
 }
 
-def MOVAimm8 : MCS51InstImm8<0x7, (outs AREG:$ra), (ins imm8:$imm8),
- "MOV", "$ra, #$imm8", [(set AREG:$ra, imm8:$imm8)]>;
-def MOVARn  : MCS51InstRn<0xE, (outs AREG:$ra), (ins GPRn:$rn),
- "MOV", "$ra, $rn", [(set AREG:$ra, GPRn:$rn)]>;
-def MOVRnA  : MCS51InstRn<0xF, (outs GPRn:$rn), (ins AREG:$ra),
- "MOV", "$rn, $ra", [(set GPRn:$rn, AREG:$ra)]>;
+def MOVAimm8 : InsImm8<0x7, (outs), (ins imm8:$imm8),
+ "MOV", "A, #$imm8", [(set ACC, imm8:$imm8)]>;
+def MOVARn  : InsARn<0xE, (outs), (ins GPRn:$rn),
+ "MOV", "A, $rn", [(set ACC, GPRn:$rn)]>;
+def MOVRnA  : InsARn<0xF, (outs GPRn:$rn), (ins),
+ "MOV", "$rn, A", [(set GPRn:$rn, ACC)]>;
+
 
 // TODO: ACALL / AJMP are somewhat unlikely to be used by the compiler but
 // should be dis/assemblable at least

@@ -11,7 +11,7 @@ class MCS51Inst<dag outs, dag ins, string opcodestr, string argstr, list<dag> pa
 }
 
 // Using the Ghidra 8051 SLEIGH definitions here
-class MCS51Inst8<dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+class Inst8<dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
   field bits<8> Inst;
   let Size = 1;
@@ -31,7 +31,7 @@ class MCS51InstAddr16<bits<8> op, dag outs, dag ins, string opcodestr, string ar
   let Inst{23-16} = addr16{7-0};
 }
 
-class MCS51InstImm8<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+class InsImm8<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
   field bits<16> Inst;
   bits<8> imm8;
@@ -42,7 +42,7 @@ class MCS51InstImm8<bits<4> ophi, dag outs, dag ins, string opcodestr, string ar
   let Inst{15-8} = imm8;
 }
 
-class MCS51InstDir8<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+class InsDir8<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
   field bits<16> Inst;
   bits<8> a8;
@@ -53,13 +53,13 @@ class MCS51InstDir8<bits<4> ophi, dag outs, dag ins, string opcodestr, string ar
   let Inst{15-8} = a8;
 }
 
-class MCS51InstNoArgs<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
-                 : MCS51Inst8<outs, ins, opcodestr, argstr, pattern> {
+class InstNoArgs<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                 : Inst8<outs, ins, opcodestr, argstr, pattern> {
   let Inst = op;
 }
 
-class MCS51InstRn<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
-                  : MCS51Inst8<outs, ins, opcodestr, argstr, pattern> {
+class InsARn<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                  : Inst8<outs, ins, opcodestr, argstr, pattern> {
   bits<3> rn;
 
   let Inst{7-4} = ophi;
@@ -67,8 +67,8 @@ class MCS51InstRn<bits<4> ophi, dag outs, dag ins, string opcodestr, string args
   let Inst{3} = 1;  // "rnfill"
 }
 
-class MCS51InstRi<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
-                  : MCS51Inst8<outs, ins, opcodestr, argstr, pattern> {
+class InsARi<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                  : Inst8<outs, ins, opcodestr, argstr, pattern> {
   bits<1> ri;
 
   let Inst{7-4} = ophi;

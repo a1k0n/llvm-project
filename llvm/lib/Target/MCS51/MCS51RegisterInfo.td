@@ -23,8 +23,8 @@ def R5 : MCS51Reg<5, 5, "R5", [], []>, DwarfRegNum<[5]>;
 def R6 : MCS51Reg<6, 6, "R6", [], []>, DwarfRegNum<[6]>;
 def R7 : MCS51Reg<7, 7, "R7", [], []>, DwarfRegNum<[7]>;
 
-def A : MCS51Reg<8, 0xe0, "A", [], []>, DwarfRegNum<[8]>;
-def B : MCS51Reg<9, 0xf0, "B", [], []>, DwarfRegNum<[9]>;
+def ACC : MCS51Reg<8,  0xe0, "ACC", [], []>, DwarfRegNum<[8]>;
+def B   : MCS51Reg<9,  0xf0, "B", [], []>, DwarfRegNum<[9]>;
 def PSW : MCS51Reg<10, 0xd0, "PSW", [], []>, DwarfRegNum<[10]>;
 
 def DPL : MCS51Reg<11, 0x82, "DPL", [], []>, DwarfRegNum<[11]>;
@@ -43,15 +43,8 @@ let SubRegIndices = [SubRegIndex<8>, SubRegIndex<8, 8>], CoveredBySubRegs = 1 in
 // reflecting the preferred register allocation sequence.
 
 def GPRn : RegisterClass<"MCS51", [i8], 8,
-  (add R0, R1, R2, R3, R4, R5, R6, R7)>;
+  (add R0, R1, R2, R3, R4, R5, R6, R7)> {
+}
 
 def GPRi : RegisterClass<"MCS51", [i8], 8,
   (add R0, R1)>;
-
-// the accumulator is in its own class
-def AREG : RegisterClass<"MCS51", [i8], 8, (add A)>;
-
-// as is DPTR
-def DPTRREG : RegisterClass<"MCS51", [i16], 8, (add DPTR)>;
-
-
