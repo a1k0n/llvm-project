@@ -69,9 +69,15 @@ XRL A, @R1
 # CHECK-INST: ; encoding: [0x67]
 
 .LBB0:
+MOV A, #.LBB0
+# CHECK-INST: MOV     A, #.LBB0 ; encoding: [0x74,A]
+# CHECK-INST:                   ;   fixup A - offset: 1, value: .LBB0, kind: FK_Data_1
+# CHECK-OBJDUMP: 74 00         MOV     A, #0
 LJMP .LBB0
-# CHECK-INST: LJMP .LBB0 ; encoding: [0x02,A,A]
-# CHECK-OBJDUMP: LJMP 0
+# CHECK-INST: LJMP    .LBB0     ; encoding: [0x02,A,A]
+# CHECK-INST:                   ;   fixup A - offset: 1, value: .LBB0, kind: FK_Data_2
+# CHECK-OBJDUMP: 02 00 00      LJMP    0
 # RELOC: RELOCATION RECORDS FOR [.text]:
 # RELOC: OFFSET   TYPE                     VALUE
-# RELOC: 0000001f R_MCS51_ADDR16           .text+0x1e
+# RELOC: 0000001f R_MCS51_ADDR8            .text+0x1e
+# RELOC: 00000021 R_MCS51_ADDR16           .text+0x1e

@@ -109,7 +109,7 @@ MCS51MCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
       if (MI.getOpcode() == MCS51::LJMP) {
         Fixups.push_back(MCFixup::create(1, Expr, FK_Data_2));
       } else {
-        dbgs() << "guessing how to create fixup for opcode " << MI.getOpcode() << "\n";
+        LLVM_DEBUG(dbgs() << "guessing how to create fixup for opcode " << MI.getOpcode() << "\n");
         Fixups.push_back(MCFixup::create(1, Expr, FK_Data_1));
       }
       return 0;
