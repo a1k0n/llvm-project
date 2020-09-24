@@ -1,5 +1,6 @@
 # RUN: llvm-mc -triple mcs51 -show-encoding %s | FileCheck -check-prefixes=CHECK,CHECK-INST %s
-# RUN: llvm-mc -triple mcs51 -filetype obj < %s | llvm-objdump -d - | FileCheck -check-prefix=CHECK %s
+# RUN: llvm-mc -triple mcs51 -filetype obj < %s | llvm-objdump -d - | FileCheck -check-prefixes=CHECK,CHECK-OBJDUMP %s
+# RUN: llvm-mc -triple mcs51 -filetype obj < %s | llvm-objdump -r - | FileCheck -check-prefix=RELOC %s
 
 # CHECK: .text
 CLR  A
@@ -66,3 +67,11 @@ XRL A, 0x45
 XRL A, @R1
 # CHECK: XRL A, @R1
 # CHECK-INST: ; encoding: [0x67]
+
+.LBB0:
+LJMP .LBB0
+# CHECK-INST: LJMP .LBB0 ; encoding: [0x02,A,A]
+# CHECK-OBJDUMP: LJMP 0
+# RELOC: RELOCATION RECORDS FOR [.text]:
+# RELOC: OFFSET   TYPE                     VALUE
+# RELOC: 0000001f R_MCS51_ADDR16           .text+0x1e

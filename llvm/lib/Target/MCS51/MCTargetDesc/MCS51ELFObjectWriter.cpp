@@ -29,7 +29,7 @@ protected:
 }
 
 MCS51ELFObjectWriter::MCS51ELFObjectWriter(uint8_t OSABI)
-    : MCELFObjectTargetWriter(/*Is64Bit=*/ false, OSABI, ELF::EM_8051,
+    : MCELFObjectTargetWriter(/*Is64Bit=*/false, OSABI, ELF::EM_8051,
                               /*HasRelocationAddend*/ true) {}
 
 MCS51ELFObjectWriter::~MCS51ELFObjectWriter() {}
@@ -38,7 +38,15 @@ unsigned MCS51ELFObjectWriter::getRelocType(MCContext &Ctx,
                                             const MCValue &Target,
                                             const MCFixup &Fixup,
                                             bool IsPCRel) const {
-  report_fatal_error("invalid fixup kind!");
+  
+switch ((unsigned)Fixup.getKind()) {
+  default:
+    llvm_unreachable("invalid fixup kind!");
+  case FK_Data_1:
+    return ELF::R_MCS51_ADDR8;
+  case FK_Data_2:
+    return ELF::R_MCS51_ADDR16;
+  }
 }
 
 std::unique_ptr<MCObjectTargetWriter> llvm::createMCS51ELFObjectWriter(

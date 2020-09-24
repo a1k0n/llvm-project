@@ -30,9 +30,9 @@ public:
   ~MCS51AsmBackend() override {}
 
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
-                          const MCValue &Target, MutableArrayRef<char> Data,
-                          uint64_t Value, bool IsResolved,
-                          const MCSubtargetInfo *STI) const override;
+                  const MCValue &Target, MutableArrayRef<char> Data,
+                  uint64_t Value, bool IsResolved,
+                  const MCSubtargetInfo *STI) const override;
 
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override;
@@ -59,11 +59,32 @@ bool MCS51AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count) const {
 }
 
 void MCS51AsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
-                                 const MCValue &       Target,
+                                 const MCValue &Target,
                                  MutableArrayRef<char> Data, uint64_t Value,
                                  bool IsResolved,
                                  const MCSubtargetInfo *STI) const {
-  return;
+  if (!Value) {
+    // zero values don't change encoding
+    return;
+  }
+
+  // MCContext &Ctx = Asm.getContext();
+  // TODO: adjustFixupValue(Fixup, Value, Ctx);
+
+  MCFixupKindInfo Info = getFixupKindInfo(Fixup.getKind());
+  Value <<= Info.TargetOffset;
+  unsigned Offset = Fixup.getOffset();
+  unsigned NumBytes = (Info.TargetSize + 7) / 8;
+#ifndef NDEBUG
+  assert(Offset + NumBytes <= Data.size() && "Invalid fixup offset!");
+#endif
+
+  // For each byte of the fragment that the fixup touches, mask in the
+  // bits from the fixup value.
+  for (unsigned i = 0; i < NumBytes; ++i) {
+    Data[Offset + i] |= Value & 0xff;
+    Value >>= 8;
+  }
 }
 
 std::unique_ptr<MCObjectTargetWriter>

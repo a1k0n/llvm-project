@@ -79,6 +79,14 @@ static DecodeStatus DecodeGPRiRegisterClass(MCInst &Inst, uint64_t RegNo,
   return DecodeGPRnRegisterClass(Inst, RegNo, Address, Decoder);
 }
 
+static DecodeStatus decodeImmAddr16Operand(MCInst &Inst, uint64_t Imm,
+                                           int64_t Address,
+                                           const void *Decoder) {
+  assert(isUInt<16>(Imm) && "Invalid immediate address");
+  Inst.addOperand(MCOperand::createImm(Imm));
+  return MCDisassembler::Success;
+}
+
 /*
 template <unsigned N>
 static DecodeStatus decodeUImmOperand(MCInst &Inst, uint64_t Imm,

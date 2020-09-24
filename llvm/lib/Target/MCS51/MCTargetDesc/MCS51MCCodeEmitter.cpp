@@ -21,6 +21,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -38,8 +39,8 @@ class MCS51MCCodeEmitter : public MCCodeEmitter {
   MCContext &Ctx;
 
 public:
- MCS51MCCodeEmitter(const MCInstrInfo &MCII, MCContext &ctx)
-     : MCII(MCII), Ctx(ctx) {}
+ MCS51MCCodeEmitter(const MCInstrInfo &MCII, MCContext &Ctx)
+     : MCII(MCII), Ctx(Ctx) {}
 
  ~MCS51MCCodeEmitter() override {}
 
@@ -58,6 +59,10 @@ public:
  unsigned getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                             SmallVectorImpl<MCFixup> &Fixups,
                             const MCSubtargetInfo &   STI) const;
+
+ unsigned getImmOpValue(const MCInst &MI, unsigned OpNo,
+                        SmallVectorImpl<MCFixup> &Fixups,
+                        const MCSubtargetInfo &STI) const;
 };
 } // end anonymous namespace
 
@@ -94,9 +99,59 @@ MCS51MCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
 
   if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
+  
+  if (MO.isExpr()) {
+    const MCExpr *Expr = MO.getExpr();
+    MCExpr::ExprKind Kind = Expr->getKind();
+
+    if (Kind == MCExpr::SymbolRef &&
+    cast<MCSymbolRefExpr>(Expr)->getKind() == MCSymbolRefExpr::VK_None) {
+      if (MI.getOpcode() == MCS51::LJMP) {
+        Fixups.push_back(MCFixup::create(1, Expr, FK_Data_2));
+      } else {
+        dbgs() << "guessing how to create fixup for opcode " << MI.getOpcode() << "\n";
+        Fixups.push_back(MCFixup::create(1, Expr, FK_Data_1));
+      }
+      return 0;
+    }
+
+/*
+    dbgs() << "machineop for expression: "; MO.getExpr()->dump();
+    MCValue Value;
+    if (MO.getExpr()->evaluateAsRelocatable(Value, nullptr, nullptr)) {
+      dbgs() << "matched as relocatable: ";
+      Value.dump();
+      dbgs() << "\n";
+      if (Value.isAbsolute()) {
+        dbgs() << " (absolute: " << Value.getConstant() << ")\n";
+        return static_cast<unsigned>(Value.getConstant());
+      } else {
+        dbgs() << " (not constant ... what now?)\n";
+      }
+    }
+  */
+  }
 
   llvm_unreachable("Unhandled expression!");
   return 0;
 }
+
+/*
+unsigned MCS51MCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
+                                           SmallVectorImpl<MCFixup> &Fixups,
+                                           const MCSubtargetInfo &STI) const {
+
+  const MCOperand &MO = MI.getOperand(OpNo);
+  dbgs() << "getImmOpValue\n";
+
+  // If the destination is an immediate, there is nothing to do
+  if (MO.isImm())
+    return MO.getImm();
+
+  llvm_unreachable("Unhandled expression!");
+
+  return 0;
+}
+*/
 
 #include "MCS51GenMCCodeEmitter.inc"
