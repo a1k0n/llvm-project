@@ -159,6 +159,13 @@ StringRef llvm::object::getELFRelocationTypeName(uint32_t Machine,
       break;
     }
     break;
+  case ELF::EM_8051:
+    switch (Type) {
+#include "llvm/BinaryFormat/ELFRelocs/MCS51.def"
+    default:
+      break;
+    }
+    break;
   default:
     break;
   }

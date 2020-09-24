@@ -1,7 +1,7 @@
 # RUN: llvm-mc %s -filetype=obj -triple=mcs51 | llvm-readobj -h - | FileCheck %s
 
-# CHECK: Format: elf32-unknown
-# CHECK: Arch: unknown
+# CHECK: Format: elf32-mcs51
+# CHECK: Arch: mcs51
 # CHECK: AddressSize: 32bit
 # CHECK: LoadName: <Not found>
 # CHECK: ElfHeader {

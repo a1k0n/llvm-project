@@ -1,5 +1,5 @@
 # RUN: llvm-mc -triple mcs51 -show-encoding %s | FileCheck -check-prefixes=CHECK,CHECK-INST %s
-# RUN: llvm-mc -triple mcs51 -filetype obj < %s | llvm-objdump --triple=mcs51 -d - | FileCheck -check-prefix=CHECK %s
+# RUN: llvm-mc -triple mcs51 -filetype obj < %s | llvm-objdump -d - | FileCheck -check-prefix=CHECK %s
 
 # CHECK: .text
 CLR  A

@@ -779,6 +779,11 @@ enum {
 #include "ELFRelocs/CSKY.def"
 };
 
+// ELF Relocation types for MCS51 / 8051
+enum {
+#include "ELFRelocs/MCS51.def"
+};
+
 #undef ELF_RELOC
 
 // Section header.
