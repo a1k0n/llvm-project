@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCS51InstPrinter.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -55,4 +56,61 @@ void MCS51InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 
   assert(MO.isExpr() && "Unknown operand kind in printOperand");
   MO.getExpr()->print(O, &MAI);
+}
+
+/// This is used to print an immediate value that ends up
+/// being encoded as a pc-relative value.
+void MCS51InstPrinter::printPCRelImm8(const MCInst *MI, unsigned OpNo,
+                                      raw_ostream &O) {
+  if (OpNo >= MI->size()) {
+    // Not all operands are correctly disassembled at the moment. This means
+    // that some machine instructions won't have all the necessary operands
+    // set.
+    // To avoid asserting, print <unknown> instead until the necessary support
+    // has been implemented.
+    O << "<unknown>";
+    return;
+  }
+
+  const MCOperand &Op = MI->getOperand(OpNo);
+
+  if (Op.isImm()) {
+    // sign extend
+    int64_t Imm = static_cast<int64_t>(static_cast<int8_t>(Op.getImm()));
+    O << '.';
+
+    // Print a position sign if needed.
+    // Negative values have their sign printed automatically.
+    if (Imm >= 0)
+      O << '+';
+
+    O << Imm;
+  } else {
+    assert(Op.isExpr() && "Unknown pcrel immediate operand");
+    O << *Op.getExpr();
+  }
+}
+
+void MCS51InstPrinter::printAbsAddr16(const MCInst *MI, unsigned OpNo,
+                                      raw_ostream &O) {
+  if (OpNo >= MI->size()) {
+    // Not all operands are correctly disassembled at the moment. This means
+    // that some machine instructions won't have all the necessary operands
+    // set.
+    // To avoid asserting, print <unknown> instead until the necessary support
+    // has been implemented.
+    O << "<unknown>";
+    return;
+  }
+
+  const MCOperand &Op = MI->getOperand(OpNo);
+
+  if (Op.isImm()) {
+    uint16_t Imm = Op.getImm();
+
+    O << "0x" << Twine::utohexstr(Imm) << "\n";
+  } else {
+    assert(Op.isExpr() && "Unknown pcrel immediate operand");
+    O << *Op.getExpr();
+  }
 }

@@ -46,6 +46,8 @@ switch ((unsigned)Fixup.getKind()) {
     return ELF::R_MCS51_ADDR8;
   case FK_Data_2:
     return ELF::R_MCS51_ADDR16;
+  case FK_PCRel_1:
+    return ELF::R_MCS51_PCREL8;
   }
 }
 

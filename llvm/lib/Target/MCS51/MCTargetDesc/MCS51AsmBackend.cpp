@@ -37,6 +37,9 @@ public:
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override;
 
+  uint64_t adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
+                            MCContext &Ctx) const;
+
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                             const MCRelaxableFragment *DF,
                             const MCAsmLayout &Layout) const override {
@@ -58,18 +61,26 @@ bool MCS51AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count) const {
   return true;
 }
 
+uint64_t MCS51AsmBackend::adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
+                                           MCContext &Ctx) const {
+  unsigned Kind = Fixup.getKind();
+  switch (Kind) {
+  case FK_PCRel_1:
+    // adjust value to point to next instruction (all PCRel_1 insns have the
+    // same form)
+    return Value - 1;
+  default:
+    return Value;
+  }
+}
+
 void MCS51AsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                                  const MCValue &Target,
                                  MutableArrayRef<char> Data, uint64_t Value,
                                  bool IsResolved,
                                  const MCSubtargetInfo *STI) const {
-  if (!Value) {
-    // zero values don't change encoding
-    return;
-  }
-
-  // MCContext &Ctx = Asm.getContext();
-  // TODO: adjustFixupValue(Fixup, Value, Ctx);
+  MCContext &Ctx = Asm.getContext();
+  Value = adjustFixupValue(Fixup, Value, Ctx);
 
   MCFixupKindInfo Info = getFixupKindInfo(Fixup.getKind());
   Value <<= Info.TargetOffset;

@@ -63,6 +63,14 @@ public:
  unsigned getImmOpValue(const MCInst &MI, unsigned OpNo,
                         SmallVectorImpl<MCFixup> &Fixups,
                         const MCSubtargetInfo &STI) const;
+
+ unsigned encodeRelBrTarget(const MCInst &MI, unsigned OpNo,
+                            SmallVectorImpl<MCFixup> &Fixups,
+                            const MCSubtargetInfo &STI) const;
+
+ unsigned encodeAbsBrTarget(const MCInst &MI, unsigned OpNo,
+                            SmallVectorImpl<MCFixup> &Fixups,
+                            const MCSubtargetInfo &STI) const;
 };
 } // end anonymous namespace
 
@@ -107,8 +115,10 @@ MCS51MCCodeEmitter::getMachineOpValue(const MCInst &MI, const MCOperand &MO,
     if (Kind == MCExpr::SymbolRef &&
     cast<MCSymbolRefExpr>(Expr)->getKind() == MCSymbolRefExpr::VK_None) {
       if (MI.getOpcode() == MCS51::LJMP) {
+        LLVM_DEBUG(dbgs() << "MCS51::LJMP -- shouldn't get here\n");
         Fixups.push_back(MCFixup::create(1, Expr, FK_Data_2));
       } else {
+        // TODO: explicitly handle all the immediate insns
         LLVM_DEBUG(dbgs() << "guessing how to create fixup for opcode " << MI.getOpcode() << "\n");
         Fixups.push_back(MCFixup::create(1, Expr, FK_Data_1));
       }
@@ -153,5 +163,35 @@ unsigned MCS51MCCodeEmitter::getImmOpValue(const MCInst &MI, unsigned OpNo,
   return 0;
 }
 */
+
+unsigned MCS51MCCodeEmitter::encodeRelBrTarget(const MCInst &MI, unsigned OpNo,
+                                             SmallVectorImpl<MCFixup> &Fixups,
+                                             const MCSubtargetInfo &STI) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+
+  if (MO.isExpr()) {
+    Fixups.push_back(
+        MCFixup::create(1, MO.getExpr(), MCFixupKind(FK_PCRel_1), MI.getLoc()));
+    return 0;
+  }
+
+  assert(MO.isImm());
+  return MO.getImm();
+}
+
+unsigned MCS51MCCodeEmitter::encodeAbsBrTarget(const MCInst &MI, unsigned OpNo,
+                                             SmallVectorImpl<MCFixup> &Fixups,
+                                             const MCSubtargetInfo &STI) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+
+  if (MO.isExpr()) {
+    Fixups.push_back(
+        MCFixup::create(1, MO.getExpr(), MCFixupKind(FK_Data_2), MI.getLoc()));
+    return 0;
+  }
+
+  assert(MO.isImm());
+  return MO.getImm();
+}
 
 #include "MCS51GenMCCodeEmitter.inc"

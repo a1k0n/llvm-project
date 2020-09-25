@@ -6,11 +6,18 @@ class ImmAddrOperand<int width> : AsmOperandClass {
   let DiagnosticType = !strconcat("Invalid", Name);
 }
 
-def addr16 : Operand<i16> {
+def addr16 : Operand<OtherVT> {
+  let PrintMethod = "printAbsAddr16";
+  let EncoderMethod = "encodeAbsBrTarget";
 }
 
 def imm8 : Operand<i8> {
   // also hex?
+}
+
+def reladdr8 : Operand<OtherVT> {
+  let PrintMethod = "printPCRelImm8";
+  let EncoderMethod = "encodeRelBrTarget";
 }
 
 def direct : Operand<i8> {
@@ -92,3 +99,5 @@ def MOVRnA  : InsARn<0xF, (outs GPRn:$rn), (ins),
 
 def LCALL : MCS51InstAddr16<0x12, (outs), (ins addr16:$addr16), "LCALL", "$addr16", []>;
 def LJMP : MCS51InstAddr16<0x02, (outs), (ins addr16:$addr16), "LJMP", "$addr16", []>;
+
+def SJMP : MCS51InstRelAddr8<0x80, (outs), (ins reladdr8:$rel8), "SJMP", "$rel8", []>;

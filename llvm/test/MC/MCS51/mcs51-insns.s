@@ -37,7 +37,7 @@ NOP
 # CHECK: NOP
 # CHECK-INST: ; encoding: [0x00]
 LJMP 0x1234
-# CHECK: LJMP 4660
+# CHECK: LJMP 0x1234
 # CHECK-INST: ; encoding: [0x02,0x12,0x34]
 RET
 # CHECK: RET
@@ -76,7 +76,12 @@ MOV A, #.LBB0
 LJMP .LBB0
 # CHECK-INST: LJMP    .LBB0     ; encoding: [0x02,A,A]
 # CHECK-INST:                   ;   fixup A - offset: 1, value: .LBB0, kind: FK_Data_2
-# CHECK-OBJDUMP: 02 00 00      LJMP    0
+# CHECK-OBJDUMP: 02 00 00      LJMP    0x0
+SJMP .LBB0
+# CHECK-INST: SJMP    .LBB0     ; encoding: [0x80,A]
+# CHECK-INST:                   ;   fixup A - offset: 1, value: .LBB0, kind: FK_PCRel_1
+# CHECK-OBJDUMP: 80 f9         SJMP    .-7
+
 # RELOC: RELOCATION RECORDS FOR [.text]:
 # RELOC: OFFSET   TYPE                     VALUE
 # RELOC: 0000001f R_MCS51_ADDR8            .text+0x1e
