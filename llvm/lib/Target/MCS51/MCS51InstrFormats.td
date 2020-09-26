@@ -63,6 +63,18 @@ class InsDir8<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, 
   let Inst{15-8} = a8;
 }
 
+class InsDirRn<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                 : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
+  field bits<16> Inst;
+  bits<3> rn;
+  let Size = 2;
+
+  let Inst{7-4} = ophi;
+  let Inst{3-0} = 5;
+  let Inst{10-8} = rn;
+  let Inst{15-11} = 0;
+}
+
 class InstNoArgs<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : Inst8<outs, ins, opcodestr, argstr, pattern> {
   let Inst = op;

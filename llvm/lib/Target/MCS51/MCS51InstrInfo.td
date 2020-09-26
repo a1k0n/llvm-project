@@ -42,20 +42,11 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   def RETI : InstNoArgs<0x32, (outs), (ins), "RETI", "", [(RetIFlag)]>;
 }
 
-let Uses = [ACC], Defs = [ACC] in {
-  def INCA : InstNoArgs<0x04, (outs), (ins),
-    "INC", "A", [(set ACC, (add ACC, 1))]>;
-}
-
-let Defs = [ACC] in {
-  def CLRA : InstNoArgs<0xE4, (outs), (ins), "CLR", "A", [(set ACC, 0)]>;
-}
-
 let Constraints = "$dst = $rn" in {
   def INCRn : InsARn<0, (outs GPRn:$dst), (ins GPRn:$rn),
     "INC", "$rn", [(set GPRn:$dst, (add GPRn:$rn, 1))]>;
   def DECRn : InsARn<1, (outs GPRn:$dst), (ins GPRn:$rn),
-    "DEC", "$rn", [(set GPRn:$dst, (sub GPRn:$rn, 1))]>;
+    "DEC", "$rn", [(set GPRn:$dst, (add GPRn:$rn, -1))]>;
 }
 
 let Constraints = "$dst = $ri" in {
@@ -65,13 +56,26 @@ let Constraints = "$dst = $ri" in {
   def INCRi : InsARi<0, (outs GPRi:$dst), (ins GPRi:$ri),
     "INC", "@$ri", [(store GPRi:$dst, (add (load GPRi:$ri), 1))]>;
   def DECRi : InsARi<1, (outs GPRi:$dst), (ins GPRi:$ri),
-    "DEC", "@$ri", [(store GPRi:$dst, (sub (load GPRi:$ri), 1))]>;
+    "DEC", "@$ri", [(store GPRi:$dst, (add (load GPRi:$ri), -1))]>;
 }
 
 def INCDir : InsDir8<0, (outs), (ins direct:$a8),
  "INC", "$a8", [(store direct:$a8, (add (load direct:$a8), 1))]>;
 def DECDir : InsDir8<1, (outs), (ins direct:$a8),
- "DEC", "$a8", [(store direct:$a8, (sub (load direct:$a8), 1))]>;
+ "DEC", "$a8", [(store direct:$a8, (add (load direct:$a8), -1))]>;
+
+// INC A is intentionally put last here so that greedy selection will pick INC
+// Rn first to avoid register copies if possible.
+let Uses = [ACC], Defs = [ACC] in {
+  def INCA : InstNoArgs<0x04, (outs), (ins),
+    "INC", "A", [(set ACC, (add ACC, 1))]>;
+  def DECA : InstNoArgs<0x14, (outs), (ins),
+    "DEC", "A", [(set ACC, (add ACC, -1))]>;
+}
+
+let Defs = [ACC] in {
+  def CLRA : InstNoArgs<0xE4, (outs), (ins), "CLR", "A", [(set ACC, 0)]>;
+}
 
 multiclass alu_inst<bits<4> opc, string mnemonic, dag op> {
   def _ARn : InsARn<opc, (outs), (ins GPRn:$rn), mnemonic, "A, $rn", [(set ACC, (op ACC, GPRn:$rn))]>;
