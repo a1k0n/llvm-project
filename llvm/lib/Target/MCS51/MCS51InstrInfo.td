@@ -102,12 +102,17 @@ let Constraints = "$tmp = $rn" in {
   "XCH", "A, $rn", []>;
 }
 
-def MOVAimm8 : InsImm8<0x7, (outs), (ins imm8:$imm8),
- "MOV", "A, #$imm8", [(set ACC, imm8:$imm8)]>;
-def MOVARn  : InsARn<0xE, (outs), (ins GPRn:$rn),
- "MOV", "A, $rn", [(set ACC, GPRn:$rn)]>;
-def MOVRnA  : InsARn<0xF, (outs GPRn:$rn), (ins),
- "MOV", "$rn, A", [(set GPRn:$rn, ACC)]>;
+let Defs = [ACC] in {
+  def MOVAimm8 : InsImm8<0x7, (outs), (ins imm8:$imm8),
+  "MOV", "A, #$imm8", [(set ACC, imm8:$imm8)]>;
+  def MOVARn  : InsARn<0xE, (outs), (ins GPRn:$rn),
+  "MOV", "A, $rn", [(set ACC, GPRn:$rn)]>;
+}
+
+let Uses = [ACC] in {
+  def MOVRnA  : InsARn<0xF, (outs GPRn:$rn), (ins),
+  "MOV", "$rn, A", [(set GPRn:$rn, ACC)]>;
+}
 
 
 // TODO: ACALL / AJMP are somewhat unlikely to be used by the compiler but
