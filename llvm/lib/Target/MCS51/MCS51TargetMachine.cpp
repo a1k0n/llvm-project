@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCS51.h"
 #include "MCS51TargetMachine.h"
 #include "TargetInfo/MCS51TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
@@ -51,10 +52,31 @@ MCS51TargetMachine::MCS51TargetMachine(const Target &T, const Triple &TT,
     : LLVMTargetMachine(T, MCS51DataLayout, TT, CPU, FS, Options,
                         getEffectiveRelocModel(TT, RM),
                         getEffectiveCodeModel(CM, CodeModel::Small), OL),
-      TLOF(std::make_unique<TargetLoweringObjectFileELF>()) {
+      TLOF(std::make_unique<TargetLoweringObjectFileELF>()),
+      Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }
 
+namespace {
+class MCS51PassConfig : public TargetPassConfig {
+public:
+  MCS51PassConfig(MCS51TargetMachine &TM, PassManagerBase &PM)
+      : TargetPassConfig(TM, PM) {}
+
+  MCS51TargetMachine &getMCS51TargetMachine() const {
+    return getTM<MCS51TargetMachine>();
+  }
+
+  bool addInstSelector() override;
+};
+}
+
 TargetPassConfig *MCS51TargetMachine::createPassConfig(PassManagerBase &PM) {
-  return new TargetPassConfig(*this, PM);
+  return new MCS51PassConfig(*this, PM);
+}
+
+bool MCS51PassConfig::addInstSelector() {
+  addPass(createMCS51ISelDag(getMCS51TargetMachine()));
+
+  return false;
 }

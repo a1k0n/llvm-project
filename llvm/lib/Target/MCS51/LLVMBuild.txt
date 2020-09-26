@@ -28,5 +28,6 @@ has_asmprinter = 1
 type = Library
 name = MCS51CodeGen
 parent = MCS51
-required_libraries = AsmPrinter Core CodeGen MC MCS51Desc MCS51Info Support Target
+required_libraries = AsmPrinter Core CodeGen MC MCS51Desc MCS51Info
+  SelectionDAG Support Target
 add_to_library_groups = MCS51

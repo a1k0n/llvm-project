@@ -16,6 +16,7 @@
 #include <memory>
 
 #include "MCTargetDesc/MCS51MCTargetDesc.h"
+#include "MCS51Subtarget.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
@@ -23,12 +24,17 @@
 namespace llvm {
 class MCS51TargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
+  MCS51Subtarget Subtarget;
 
  public:
   MCS51TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                      StringRef FS, const TargetOptions &Options,
                      Optional<Reloc::Model> RM, Optional<CodeModel::Model> CM,
                      CodeGenOpt::Level OL, bool JIT);
+
+  const MCS51Subtarget *getSubtargetImpl(const Function &) const override {
+    return &Subtarget;
+  }
 
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 

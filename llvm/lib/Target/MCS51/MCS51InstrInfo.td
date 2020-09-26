@@ -1,5 +1,15 @@
 include "MCS51InstrFormats.td"
 
+//===----------------------------------------------------------------------===//
+// MCS51 specific DAG Nodes.
+//===----------------------------------------------------------------------===//
+
+def RetFlag : SDNode<"MCS51ISD::RET_FLAG", SDTNone,
+                     [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+def RetIFlag : SDNode<"MCS51ISD::RETI_FLAG", SDTNone,
+                     [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+
+
 class ImmAddrOperand<int width> : AsmOperandClass {
   let Name = "ImmAddr" # width;
   let RenderMethod = "addImmOperands";
@@ -11,7 +21,7 @@ def addr16 : Operand<OtherVT> {
   let EncoderMethod = "encodeAbsBrTarget";
 }
 
-def imm8 : Operand<i8> {
+def imm8 : Operand<i8>, ImmLeaf<i8, [{return isInt<8>(Imm);}]> {
   // also hex?
 }
 
@@ -20,15 +30,17 @@ def reladdr8 : Operand<OtherVT> {
   let EncoderMethod = "encodeRelBrTarget";
 }
 
-def direct : Operand<i8> {
+def direct : Operand<i8>, ImmLeaf<i8, [{return isUInt<8>(Imm);}]> {
   // TODO: custom parser / printer for register locations in RAM, and if
   // operand is >= 0x80, SFRs
 }
 
 def NOP : InstNoArgs<0, (outs), (ins), "NOP", "", []>;
 
-def RET  : InstNoArgs<0x22, (outs), (ins), "RET",  "", []>;
-def RETI : InstNoArgs<0x32, (outs), (ins), "RETI", "", []>;
+let isTerminator = 1, isReturn = 1, isBarrier = 1 in {
+  def RET  : InstNoArgs<0x22, (outs), (ins), "RET",  "", [(RetFlag)]>;
+  def RETI : InstNoArgs<0x32, (outs), (ins), "RETI", "", [(RetIFlag)]>;
+}
 
 let Uses = [ACC], Defs = [ACC] in {
   def INCA : InstNoArgs<0x04, (outs), (ins),

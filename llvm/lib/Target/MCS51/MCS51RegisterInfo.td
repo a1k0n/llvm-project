@@ -11,6 +11,10 @@ class MCS51Reg<bits<4> num, bits<8> memaddr, string name, list<Register> subregs
 }
 
 def PC : Register<"PC">;
+def SP : Register<"SP">;
+
+// carry flag
+def CF : Register<"CF">;
 
 }  // Namespace = "MCS51"
 
@@ -48,3 +52,10 @@ def GPRn : RegisterClass<"MCS51", [i8], 8,
 
 def GPRi : RegisterClass<"MCS51", [i8], 8,
   (add R0, R1)>;
+
+def GPRAny : RegisterClass<"MCS51", [i8], 8,
+  (add R0, R1, R2, R3, R4, R5, R6, R7, ACC, B, DPL, DPH)>;
+
+def ACCClass : RegisterClass<"MCS51", [i8], 8, (add ACC)>;
+def DPTRClass : RegisterClass<"MCS51", [i16], 8, (add DPTR)>;
+def SPClass : RegisterClass<"MCS51", [i8], 8, (add SP)>;
