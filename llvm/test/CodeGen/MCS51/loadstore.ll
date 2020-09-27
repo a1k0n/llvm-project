@@ -2,8 +2,6 @@
 ; RUN: llc -mtriple=mcs51 -verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s -check-prefix=MCS51
 
-; Direct load
-
 define i8 @loadsfr() nounwind {
 ; MCS51-LABEL: loadsfr:
 ; MCS51:       ; %bb.0:
@@ -36,8 +34,8 @@ define void @incsfr() nounwind {
   ret void
 }
 
-define void @defsfr() nounwind {
-; MCS51-LABEL: defsfr:
+define void @decsfr() nounwind {
+; MCS51-LABEL: decsfr:
 ; MCS51:       ; %bb.0:
 ; MCS51-NEXT:    DEC 0x82
 ; MCS51-NEXT:    RET
@@ -63,3 +61,12 @@ define i8 @volloadplus1(i8 *%a) nounwind {
   ret i8 %2
 }
 
+define void @immsfrinit() nounwind {
+; MCS51-LABEL: immsfrinit:
+; MCS51:       ; %bb.0:
+; MCS51-NEXT:    MOV 0x82, #127
+; MCS51-NEXT:    RET
+  %sfr = inttoptr i8 130 to i8*
+  store i8 127, i8* %sfr
+  ret void
+}

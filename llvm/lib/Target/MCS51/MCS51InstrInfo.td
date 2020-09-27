@@ -102,12 +102,16 @@ let Constraints = "$tmp = $rn" in {
 }
 
 // Define all the various moves
-def MOVRnRn  : InstMovRnRdir<(outs GPRn:$rn), (ins GPRn:$rdir),
+def MOVRnRn   : InstMovRnRdir<(outs GPRn:$rn), (ins GPRn:$rdir),
   "MOV", "$rn, $rdir", [(set GPRn:$rn, GPRn:$rdir)]>;
-def MOVRnDir : InstMovRnDir<0xA, (outs GPRn:$rn), (ins direct:$a8),
-  "MOV", "$rn, $a8", [(set GPRn:$rn, (load direct:$a8))]>;
-def MOVDirRn : InstMovRnDir<0x8, (outs), (ins GPRn:$rn, direct:$a8),
-  "MOV", "$a8, $rn", [(store GPRn:$rn, direct:$a8)]>;
+def MOVRnDir  : InstRnImm8<0xA, (outs GPRn:$rn), (ins direct:$imm8),
+  "MOV", "$rn, $imm8", [(set GPRn:$rn, (load direct:$imm8))]>;
+def MOVDirRn  : InstRnImm8<0x8, (outs), (ins GPRn:$rn, direct:$imm8),
+  "MOV", "$imm8, $rn", [(store GPRn:$rn, direct:$imm8)]>;
+def MOVRnImm8 : InstRnImm8<0x7, (outs GPRn:$rn), (ins imm8:$imm8),
+  "MOV", "$rn, #$imm8", [(set GPRn:$rn, imm8:$imm8)]>;
+def MOVDirImm : InstOp8Op8<0x75, (outs), (ins direct:$opA, imm8:$opB),
+  "MOV", "$opA, #$opB", [(store imm8:$opB, direct:$opA)]>;
 
 let Defs = [ACC] in {
   def MOVADir  : InsDir8<0xE, (outs), (ins direct:$a8),
