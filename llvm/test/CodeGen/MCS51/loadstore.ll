@@ -70,3 +70,16 @@ define void @immsfrinit() nounwind {
   store i8 127, i8* %sfr
   ret void
 }
+
+define i8 @checkflag() nounwind {
+; MCS51-LABEL: checkflag:
+; MCS51:       ; %bb.0:
+; MCS51-NEXT:    MOV A, 0xe3
+; MCS51-NEXT:    ANL A, #64
+; MCS51-NEXT:    MOV R7, A
+; MCS51-NEXT:    RET
+  %sfr = inttoptr i8 227 to i8*
+  %1 = load volatile i8, i8* %sfr
+  %2 = and i8 64, %1
+  ret i8 %2
+}

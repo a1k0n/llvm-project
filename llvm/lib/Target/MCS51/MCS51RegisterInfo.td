@@ -53,6 +53,9 @@ def GPRn : RegisterClass<"MCS51", [i8], 8,
 def GPRi : RegisterClass<"MCS51", [i8], 8,
   (add R0, R1)>;
 
+def GPMovable : RegisterClass<"MCS51", [i8], 8,
+  (add ACC, R0, R1, R2, R3, R4, R5, R6, R7)>;
+
 def GPRAny : RegisterClass<"MCS51", [i8], 8,
   (add R0, R1, R2, R3, R4, R5, R6, R7, ACC, B, DPL, DPH)>;
 

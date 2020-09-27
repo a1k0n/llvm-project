@@ -26,30 +26,33 @@ using namespace llvm;
 
 #define DEBUG_TYPE "mcs51-lower-mcinst"
 
+bool llvm::LowerMCS51MachineOperandToMCOperand(const MachineOperand &MO,
+                                               MCOperand &MCOp) {
+  switch (MO.getType()) {
+  default:
+    report_fatal_error("LowerMCS51MachineInstrToMCInst: unknown operand type");
+  case MachineOperand::MO_Register:
+    // Ignore all implicit register operands.
+    if (MO.isImplicit()) {
+      LLVM_DEBUG(dbgs() << "implicit register operand "; MO.dump());
+      return true;
+    }
+    MCOp = MCOperand::createReg(MO.getReg());
+    break;
+  case MachineOperand::MO_Immediate:
+    MCOp = MCOperand::createImm(MO.getImm());
+    break;
+  }
+  return true;
+}
+
 void llvm::LowerMCS51MachineInstrToMCInst(const MachineInstr *MI,
                                           MCInst &OutMI) {
   OutMI.setOpcode(MI->getOpcode());
 
   for (const MachineOperand &MO : MI->operands()) {
     MCOperand MCOp;
-    switch (MO.getType()) {
-    default:
-      report_fatal_error(
-          "LowerMCS51MachineInstrToMCInst: unknown operand type");
-    case MachineOperand::MO_Register:
-      // Ignore all implicit register operands.
-      if (MO.isImplicit()) {
-        LLVM_DEBUG(dbgs() << "implicit register operand "; MO.dump());
-        continue;
-      }
-      MCOp = MCOperand::createReg(MO.getReg());
-      break;
-    case MachineOperand::MO_Immediate:
-      MCOp = MCOperand::createImm(MO.getImm());
-      break;
-    }
-
+    LowerMCS51MachineOperandToMCOperand(MO, MCOp);
     OutMI.addOperand(MCOp);
   }
 }
-

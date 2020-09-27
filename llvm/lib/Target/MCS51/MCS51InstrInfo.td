@@ -102,16 +102,32 @@ let Constraints = "$tmp = $rn" in {
 }
 
 // Define all the various moves
+
+// Start with pseudo-moves to cover the expanded set of MOV [A, Rn], loads and
+// stores together; the actual instruction encoding will be chosen in pseudo
+// expansion. This gives the register allocator more room to deal with loads and
+// stores.
+let isPseudo = 1, isCodeGenOnly = 1 in {
+  def MOVAnyDirect : MCS51Inst<(outs GPMovable:$dst), (ins direct:$src),
+    "MOV", "$dst, $src", [(set GPMovable:$dst, (load direct:$src))]>;
+  def MOVDirectAny : MCS51Inst<(outs), (ins direct:$dst, GPMovable:$src),
+    "MOV", "$dst, $src", [(store GPMovable:$src, direct:$dst)]>;
+}
+
 def MOVRnRn   : InstMovRnRdir<(outs GPRn:$rn), (ins GPRn:$rdir),
   "MOV", "$rn, $rdir", [(set GPRn:$rn, GPRn:$rdir)]>;
 def MOVRnDir  : InstRnImm8<0xA, (outs GPRn:$rn), (ins direct:$imm8),
   "MOV", "$rn, $imm8", [(set GPRn:$rn, (load direct:$imm8))]>;
-def MOVDirRn  : InstRnImm8<0x8, (outs), (ins GPRn:$rn, direct:$imm8),
+def MOVDirRn  : InstRnImm8<0x8, (outs), (ins direct:$imm8, GPRn:$rn),
   "MOV", "$imm8, $rn", [(store GPRn:$rn, direct:$imm8)]>;
-def MOVRnImm8 : InstRnImm8<0x7, (outs GPRn:$rn), (ins imm8:$imm8),
-  "MOV", "$rn, #$imm8", [(set GPRn:$rn, imm8:$imm8)]>;
-def MOVDirImm : InstOp8Op8<0x75, (outs), (ins direct:$opA, imm8:$opB),
-  "MOV", "$opA, #$opB", [(store imm8:$opB, direct:$opA)]>;
+let isMoveImm = 1 in {
+  def MOVRnImm8 : InstRnImm8<0x7, (outs GPRn:$rn), (ins imm8:$imm8),
+    "MOV", "$rn, #$imm8", [(set GPRn:$rn, imm8:$imm8)]>;
+let mayStore = 1 in {
+  def MOVDirImm : InstOp8Op8<0x75, (outs), (ins direct:$opA, imm8:$opB),
+    "MOV", "$opA, #$opB", [(store imm8:$opB, direct:$opA)]>;
+}
+}
 
 let Defs = [ACC] in {
   def MOVADir  : InsDir8<0xE, (outs), (ins direct:$a8),

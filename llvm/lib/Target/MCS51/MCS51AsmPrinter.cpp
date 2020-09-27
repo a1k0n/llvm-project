@@ -43,6 +43,8 @@ public:
 
   bool emitPseudoExpansionLowering(MCStreamer &OutStreamer,
                                    const MachineInstr *MI);
+
+  bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
 };
 }
 
@@ -50,10 +52,71 @@ public:
 // instructions) auto-generated.
 #include "MCS51GenMCPseudoLowering.inc"
 
+bool MCS51AsmPrinter::lowerOperand(const MachineOperand &MO, MCOperand &MCOp) {
+  LowerMCS51MachineOperandToMCOperand(MO, MCOp);
+  return true;
+}
+
 void MCS51AsmPrinter::emitInstruction(const MachineInstr *MI) {
   // Do any auto-generated pseudo lowerings.
   if (emitPseudoExpansionLowering(*OutStreamer, MI))
     return;
+
+  // custom lowering for MOVAnyDirect (load) and MOVDirectAny (store)
+  switch (MI->getOpcode()) {
+  default:
+    break;
+  case MCS51::MOVAnyDirect: {
+    Register Rd = MI->getOperand(0).getReg();
+    if (Rd == MCS51::ACC) {
+      // translate load pseudo-move into MOV A, <direct>
+      MCInst MovInst;
+      MCOperand MCSrc;
+      MovInst.setOpcode(MCS51::MOVADir);
+      lowerOperand(MI->getOperand(1), MCSrc);
+      MovInst.addOperand(MCSrc);
+      EmitToStreamer(*OutStreamer, MovInst);
+      return;
+    } else {
+      // translate load pseudo-move into MOV Rn, <direct>
+      MCInst MovInst;
+      MCOperand MCSrc, MCDst;
+      MovInst.setOpcode(MCS51::MOVRnDir);
+      lowerOperand(MI->getOperand(0), MCDst);
+      lowerOperand(MI->getOperand(1), MCSrc);
+      MovInst.addOperand(MCDst);
+      MovInst.addOperand(MCSrc);
+      EmitToStreamer(*OutStreamer, MovInst);
+      return;
+    }
+    break;
+  }
+  case MCS51::MOVDirectAny: {
+    Register Rs = MI->getOperand(1).getReg();
+    if (Rs == MCS51::ACC) {
+      // translate store pseudo-move into MOV <direct>, A
+      MCInst MovInst;
+      MCOperand MCDst;
+      MovInst.setOpcode(MCS51::MOVDirA);
+      lowerOperand(MI->getOperand(0), MCDst);
+      MovInst.addOperand(MCDst);
+      EmitToStreamer(*OutStreamer, MovInst);
+      return;
+    } else {
+      // translate store pseudo-move into MOV <direct>, Rn
+      MCInst MovInst;
+      MCOperand MCSrc, MCDst;
+      MovInst.setOpcode(MCS51::MOVDirRn);
+      lowerOperand(MI->getOperand(0), MCDst);
+      lowerOperand(MI->getOperand(1), MCSrc);
+      MovInst.addOperand(MCDst);
+      MovInst.addOperand(MCSrc);
+      EmitToStreamer(*OutStreamer, MovInst);
+      return;
+    }
+    break;
+  }
+  }
 
   MCInst TmpInst;
   LowerMCS51MachineInstrToMCInst(MI, TmpInst);

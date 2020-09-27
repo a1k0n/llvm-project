@@ -21,7 +21,12 @@
 namespace llvm {
 class MCS51TargetMachine;
 class MCInst;
+class MCOperand;
 class MachineInstr;
+class MachineOperand;
+
+bool LowerMCS51MachineOperandToMCOperand(const MachineOperand &MO,
+                                         MCOperand &MCOp);
 
 void LowerMCS51MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI);
 
