@@ -83,3 +83,15 @@ define i8 @checkflag() nounwind {
   %2 = and i8 64, %1
   ret i8 %2
 }
+
+define void @dir8todir8() nounwind {
+; MCS51-LABEL: dir8todir8:
+; MCS51:       ; %bb.0:
+; MCS51-NEXT:    MOV 0xe4, 0xe3
+; MCS51-NEXT:    RET
+  %ptr1 = inttoptr i8 227 to i8*
+  %ptr2 = inttoptr i8 228 to i8*
+  %1 = load volatile i8, i8* %ptr1
+  store i8 %1, i8* %ptr2
+  ret void
+}

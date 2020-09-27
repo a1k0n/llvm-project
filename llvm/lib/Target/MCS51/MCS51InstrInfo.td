@@ -103,15 +103,26 @@ let Constraints = "$tmp = $rn" in {
 
 // Define all the various moves
 
+// First check if we can avoid using a register at all
+let mayLoad = 1, mayStore = 1 in {
+  // note: on MOV iram8, iram8: opB is the destination (backwards from others)
+  def MOVDirDir : InstOp8Op8<0x85, (outs), (ins direct:$opA, direct:$opB),
+    "MOV", "$opB, $opA", [(store (i8 (load direct:$opA)), direct:$opB)]>;
+}
+
 // Start with pseudo-moves to cover the expanded set of MOV [A, Rn], loads and
 // stores together; the actual instruction encoding will be chosen in pseudo
 // expansion. This gives the register allocator more room to deal with loads and
 // stores.
 let isPseudo = 1, isCodeGenOnly = 1 in {
+  let mayLoad = 1 in {
   def MOVAnyDirect : MCS51Inst<(outs GPMovable:$dst), (ins direct:$src),
     "MOV", "$dst, $src", [(set GPMovable:$dst, (load direct:$src))]>;
+  }
+  let mayStore = 1 in {
   def MOVDirectAny : MCS51Inst<(outs), (ins direct:$dst, GPMovable:$src),
     "MOV", "$dst, $src", [(store GPMovable:$src, direct:$dst)]>;
+  }
 }
 
 def MOVRnRn   : InstMovRnRdir<(outs GPRn:$rn), (ins GPRn:$rdir),
