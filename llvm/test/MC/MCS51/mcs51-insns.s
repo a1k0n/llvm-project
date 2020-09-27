@@ -86,3 +86,23 @@ SJMP .LBB0
 ; RELOC: OFFSET   TYPE                     VALUE
 ; RELOC: 0000001f R_MCS51_ADDR8            .text+0x1e
 ; RELOC: 00000021 R_MCS51_ADDR16           .text+0x1e
+
+
+MOV R0, R7
+MOV R1, R6
+MOV A, @R0
+MOV @R1, A
+MOV A, 0xBA
+MOV 0xBD, A
+; CHECK-INST:        MOV     R0, R7                          ; encoding: [0xa8,0x07]
+; CHECK-INST:        MOV     R1, R6                          ; encoding: [0xa9,0x06]
+; CHECK-INST:        MOV     A, @R0                          ; encoding: [0xe6]
+; CHECK-INST:        MOV     @R1, A                          ; encoding: [0xf7]
+; CHECK-INST:        MOV     A, 186                          ; encoding: [0xe5,0xba]
+; CHECK-INST:        MOV     189, A                          ; encoding: [0xf5,0xbd]
+; CHECK-OBJDUMP:      25: a8 07         MOV     R0, R7
+; CHECK-OBJDUMP:      27: a9 06         MOV     R1, R6
+; CHECK-OBJDUMP:      29: e6            MOV     A, @R0
+; CHECK-OBJDUMP:      2a: f7            MOV     @R1, A
+; CHECK-OBJDUMP:      2b: e5 ba         MOV     A, 186
+; CHECK-OBJDUMP:      2d: f5 bd         MOV     189, A

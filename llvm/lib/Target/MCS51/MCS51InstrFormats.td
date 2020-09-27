@@ -75,6 +75,33 @@ class InsDirRn<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr,
   let Inst{15-11} = 0;
 }
 
+class InstMovRnRdir<dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                 : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
+  field bits<16> Inst;
+  bits<3> rn;
+  bits<3> rdir;
+  let Size = 2;
+
+  let Inst{7-4} = 0xa;
+  let Inst{3} = 1;  // rnfill
+  let Inst{2-0} = rn;
+  let Inst{10-8} = rdir;
+  let Inst{15-11} = 0;
+}
+
+class InstMovRnDir<bits<4> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                 : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
+  field bits<16> Inst;
+  bits<3> rn;
+  bits<8> a8;
+  let Size = 2;
+
+  let Inst{7-4} = op;
+  let Inst{3} = 1;  // rnfill
+  let Inst{2-0} = rn;
+  let Inst{15-8} = a8;
+}
+
 class InstNoArgs<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : Inst8<outs, ins, opcodestr, argstr, pattern> {
   let Inst = op;
@@ -89,7 +116,7 @@ class InsARn<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, l
   let Inst{3} = 1;  // "rnfill"
 }
 
-class InsARi<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+class InsRi<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                   : Inst8<outs, ins, opcodestr, argstr, pattern> {
   bits<1> ri;
 

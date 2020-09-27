@@ -48,5 +48,8 @@ void MCS51InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     } else {
       llvm_unreachable("trying to move non-Rn into A unimplemented");
     }
+  } else if (MCS51::GPRnRegClass.contains(SrcReg, DstReg)) {
+    BuildMI(MBB, MBBI, DL, get(MCS51::MOVRnRn), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
   }
 }

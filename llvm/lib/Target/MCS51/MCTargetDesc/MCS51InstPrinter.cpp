@@ -108,9 +108,27 @@ void MCS51InstPrinter::printAbsAddr16(const MCInst *MI, unsigned OpNo,
   if (Op.isImm()) {
     uint16_t Imm = Op.getImm();
 
-    O << "0x" << Twine::utohexstr(Imm) << "\n";
+    O << "0x" << Twine::utohexstr(Imm);
   } else {
-    assert(Op.isExpr() && "Unknown pcrel immediate operand");
+    assert(Op.isExpr() && "Unknown immediate operand");
+    O << *Op.getExpr();
+  }
+}
+
+void MCS51InstPrinter::printDirectA8(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+  if (OpNo >= MI->size()) {
+    O << "<unknown>";
+    return;
+  }
+
+  const MCOperand &Op = MI->getOperand(OpNo);
+
+  if (Op.isImm()) {
+    uint8_t Imm = Op.getImm();
+
+    O << "0x" << Twine::utohexstr(Imm);
+  } else {
+    assert(Op.isExpr() && "Unknown immediate operand");
     O << *Op.getExpr();
   }
 }

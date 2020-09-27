@@ -30,7 +30,8 @@ def reladdr8 : Operand<OtherVT> {
   let EncoderMethod = "encodeRelBrTarget";
 }
 
-def direct : Operand<i8>, ImmLeaf<i8, [{return isUInt<8>(Imm);}]> {
+def direct : Operand<i8>, ImmLeaf<i8, [{return isInt<8>(Imm);}]> {
+  let PrintMethod = "printDirectA8";
   // TODO: custom parser / printer for register locations in RAM, and if
   // operand is >= 0x80, SFRs
 }
@@ -42,6 +43,11 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   def RETI : InstNoArgs<0x32, (outs), (ins), "RETI", "", [(RetIFlag)]>;
 }
 
+def INCDir : InsDir8<0, (outs), (ins direct:$a8),
+ "INC", "$a8", [(store (add (i8 (load direct:$a8)), 1), direct:$a8)]>;
+def DECDir : InsDir8<1, (outs), (ins direct:$a8),
+ "DEC", "$a8", [(store (add (i8 (load direct:$a8)), -1), direct:$a8)]>;
+
 let Constraints = "$dst = $rn" in {
   def INCRn : InsARn<0, (outs GPRn:$dst), (ins GPRn:$rn),
     "INC", "$rn", [(set GPRn:$dst, (add GPRn:$rn, 1))]>;
@@ -49,20 +55,13 @@ let Constraints = "$dst = $rn" in {
     "DEC", "$rn", [(set GPRn:$dst, (add GPRn:$rn, -1))]>;
 }
 
-let Constraints = "$dst = $ri" in {
-  // not sure if the load/store patterns here are correct, as they lack
-  // address spaces, but these are specifically address space 0 (indirect
-  // access to internal RAM, not SFRs) which is the default
-  def INCRi : InsARi<0, (outs GPRi:$dst), (ins GPRi:$ri),
-    "INC", "@$ri", [(store GPRi:$dst, (add (load GPRi:$ri), 1))]>;
-  def DECRi : InsARi<1, (outs GPRi:$dst), (ins GPRi:$ri),
-    "DEC", "@$ri", [(store GPRi:$dst, (add (load GPRi:$ri), -1))]>;
-}
-
-def INCDir : InsDir8<0, (outs), (ins direct:$a8),
- "INC", "$a8", [(store direct:$a8, (add (load direct:$a8), 1))]>;
-def DECDir : InsDir8<1, (outs), (ins direct:$a8),
- "DEC", "$a8", [(store direct:$a8, (add (load direct:$a8), -1))]>;
+// not sure if the load/store patterns here are correct, as they lack
+// address spaces, but these are specifically address space 0 (indirect
+// access to internal RAM, not SFRs) which is the default
+def INCRi : InsRi<0, (outs), (ins GPRi:$ri),
+  "INC", "@$ri", [(store (add (i8 (load GPRi:$ri)), 1), GPRi:$ri)]>;
+def DECRi : InsRi<1, (outs), (ins GPRi:$ri),
+  "DEC", "@$ri", [(store (add (i8 (load GPRi:$ri)), -1), GPRi:$ri)]>;
 
 // INC A is intentionally put last here so that greedy selection will pick INC
 // Rn first to avoid register copies if possible.
@@ -79,7 +78,7 @@ let Defs = [ACC] in {
 
 multiclass alu_inst<bits<4> opc, string mnemonic, dag op> {
   def _ARn : InsARn<opc, (outs), (ins GPRn:$rn), mnemonic, "A, $rn", [(set ACC, (op ACC, GPRn:$rn))]>;
-  def _ARi : InsARi<opc, (outs), (ins GPRi:$ri), mnemonic, "A, @$ri", [(set ACC, (op ACC, GPRi:$ri))]>;
+  def _ARi : InsRi<opc, (outs), (ins GPRi:$ri), mnemonic, "A, @$ri", [(set ACC, (op ACC, GPRi:$ri))]>;
   def _Aimm8 : InsImm8<opc, (outs), (ins imm8:$imm8), mnemonic, "A, #$imm8", [(set ACC, (op ACC, imm8:$imm8))]>;
   def _Adir8 : InsDir8<opc, (outs), (ins direct:$a8), mnemonic, "A, $a8", [(set ACC, (op ACC, (load direct:$a8)))]>;
 }
@@ -99,21 +98,36 @@ let Uses = [ACC], Defs = [ACC] in {
 // FIXME: pattern for swapping A, Rn?
 let Constraints = "$tmp = $rn" in {
   def XCHARn  : InsARn<0xC, (outs GPRn:$tmp), (ins GPRn:$rn),
-  "XCH", "A, $rn", []>;
+    "XCH", "A, $rn", []>;
 }
 
+// Define all the various moves
+def MOVRnRn  : InstMovRnRdir<(outs GPRn:$rn), (ins GPRn:$rdir),
+  "MOV", "$rn, $rdir", [(set GPRn:$rn, GPRn:$rdir)]>;
+def MOVRnDir : InstMovRnDir<0xA, (outs GPRn:$rn), (ins direct:$a8),
+  "MOV", "$rn, $a8", [(set GPRn:$rn, (load direct:$a8))]>;
+def MOVDirRn : InstMovRnDir<0x8, (outs), (ins GPRn:$rn, direct:$a8),
+  "MOV", "$a8, $rn", [(store GPRn:$rn, direct:$a8)]>;
+
 let Defs = [ACC] in {
+  def MOVADir  : InsDir8<0xE, (outs), (ins direct:$a8),
+    "MOV", "A, $a8", [(set ACC, (load direct:$a8))]>;
   def MOVAimm8 : InsImm8<0x7, (outs), (ins imm8:$imm8),
-  "MOV", "A, #$imm8", [(set ACC, imm8:$imm8)]>;
-  def MOVARn  : InsARn<0xE, (outs), (ins GPRn:$rn),
-  "MOV", "A, $rn", [(set ACC, GPRn:$rn)]>;
+    "MOV", "A, #$imm8", [(set ACC, imm8:$imm8)]>;
+  def MOVARn   : InsARn<0xE, (outs), (ins GPRn:$rn),
+    "MOV", "A, $rn", [(set ACC, GPRn:$rn)]>;
+  def MOVARi   : InsRi<0xE, (outs), (ins GPRi:$ri),
+    "MOV", "A, @$ri", [(set ACC, (load GPRi:$ri))]>;
 }
 
 let Uses = [ACC] in {
+  def MOVDirA : InsDir8<0xF, (outs), (ins direct:$a8),
+    "MOV", "$a8, A", [(store ACC, direct:$a8)]>;
   def MOVRnA  : InsARn<0xF, (outs GPRn:$rn), (ins),
-  "MOV", "$rn, A", [(set GPRn:$rn, ACC)]>;
+    "MOV", "$rn, A", [(set GPRn:$rn, ACC)]>;
+  def MOVRiA  : InsRi<0xF, (outs), (ins GPRi:$ri),
+    "MOV", "@$ri, A", [(store ACC, GPRi:$ri)]>;
 }
-
 
 // TODO: ACALL / AJMP are somewhat unlikely to be used by the compiler but
 // should be dis/assemblable at least
