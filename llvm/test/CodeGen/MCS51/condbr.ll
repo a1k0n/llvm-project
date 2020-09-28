@@ -20,3 +20,53 @@ br1:
 br2:
   ret i8 42
 }
+
+define i8 @sfrloop() #0 {
+; MCS51-LABEL: sfrloop:
+; MCS51:       ; %bb.0:
+; MCS51-NEXT:  .LBB1_1: ; %br1
+; MCS51-NEXT:    ; =>This Inner Loop Header: Depth=1
+; MCS51-NEXT:    MOV A, 0x88
+; MCS51-NEXT:    ANL A, #64
+; MCS51-NEXT:    JNZ .LBB1_1
+; MCS51-NEXT:  ; %bb.2: ; %br2
+; MCS51-NEXT:    MOV R7, 0x89
+; MCS51-NEXT:    RET
+  br label %br1
+br1:
+  %sfr = inttoptr i8 136 to i8*
+  %1 = load volatile i8, i8* %sfr
+  %2 = and i8 %1, 64
+  %tst1 = icmp ne i8 %2, 0
+  br i1 %tst1, label %br1, label %br2
+br2:
+  %sfr2 = inttoptr i8 137 to i8*
+  %3 = load volatile i8, i8* %sfr2
+  ret i8 %3
+}
+
+define i8 @loopn(i8 %n) nounwind {
+; MCS51-LABEL: loopn:
+; MCS51:       ; %bb.0: ; %entry
+; MCS51-NEXT:  .LBB2_1: ; %br1
+; MCS51-NEXT:    ; =>This Inner Loop Header: Depth=1
+; MCS51-NEXT:    MOV R0, 0x88
+; MCS51-NEXT:    DEC R7
+; MCS51-NEXT:    MOV A, R7
+; MCS51-NEXT:    JNZ .LBB2_1
+; MCS51-NEXT:  ; %bb.2: ; %exit
+; MCS51-NEXT:    MOV R7, R0
+; MCS51-NEXT:    RET
+entry:
+  br label %br1
+br1:
+  %i = phi i8 [ %n, %entry ], [ %i.next, %br1 ]
+  %sfr = inttoptr i8 136 to i8*
+  %0 = load volatile i8, i8* %sfr
+  %i.next = sub i8 %i, 1
+  %cond = icmp eq i8 %i.next, 0
+  br i1 %cond, label %exit, label %br1
+exit:
+  ret i8 %0
+}
+
