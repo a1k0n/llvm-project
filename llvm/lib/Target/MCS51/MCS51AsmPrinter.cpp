@@ -53,8 +53,7 @@ public:
 #include "MCS51GenMCPseudoLowering.inc"
 
 bool MCS51AsmPrinter::lowerOperand(const MachineOperand &MO, MCOperand &MCOp) {
-  LowerMCS51MachineOperandToMCOperand(MO, MCOp);
-  return true;
+  return LowerMCS51MachineOperandToMCOperand(MO, MCOp, *this);
 }
 
 void MCS51AsmPrinter::emitInstruction(const MachineInstr *MI) {
@@ -119,7 +118,7 @@ void MCS51AsmPrinter::emitInstruction(const MachineInstr *MI) {
   }
 
   MCInst TmpInst;
-  LowerMCS51MachineInstrToMCInst(MI, TmpInst);
+  LowerMCS51MachineInstrToMCInst(MI, TmpInst, *this);
   EmitToStreamer(*OutStreamer, TmpInst);
 }
 

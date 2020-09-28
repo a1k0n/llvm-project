@@ -164,6 +164,19 @@ let Uses = [ACC] in {
 // should be dis/assemblable at least
 
 def LCALL : MCS51InstAddr16<0x12, (outs), (ins addr16:$addr16), "LCALL", "$addr16", []>;
-def LJMP : MCS51InstAddr16<0x02, (outs), (ins addr16:$addr16), "LJMP", "$addr16", []>;
 
-def SJMP : MCS51InstRelAddr8<0x80, (outs), (ins reladdr8:$rel8), "SJMP", "$rel8", []>;
+let isBranch = 1, isTerminator = 1 in {
+let isBarrier = 1 in {
+def LJMP : MCS51InstAddr16<0x02, (outs), (ins addr16:$addr16), "LJMP", "$addr16", []>;
+def SJMP : MCS51InstRelAddr8<0x80, (outs), (ins reladdr8:$rel8),
+  "SJMP", "$rel8", [(br bb:$rel8)]>;
+}
+
+// Conditional branches
+let Uses = [ACC] in {
+def JZ  : MCS51InstRelAddr8<0x60, (outs), (ins reladdr8:$rel8),
+  "JZ", "$rel8", [(brcond (i8 (seteq ACC, 0)), bb:$rel8)]>;
+def JNZ : MCS51InstRelAddr8<0x70, (outs), (ins reladdr8:$rel8),
+  "JNZ", "$rel8", [(brcond (i8 (setne ACC, 0)), bb:$rel8)]>;
+}
+}

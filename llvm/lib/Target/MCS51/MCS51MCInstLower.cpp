@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCS51.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -27,7 +28,8 @@ using namespace llvm;
 #define DEBUG_TYPE "mcs51-lower-mcinst"
 
 bool llvm::LowerMCS51MachineOperandToMCOperand(const MachineOperand &MO,
-                                               MCOperand &MCOp) {
+                                               MCOperand &MCOp,
+                                               const AsmPrinter &AP) {
   switch (MO.getType()) {
   default:
     report_fatal_error("LowerMCS51MachineInstrToMCInst: unknown operand type");
@@ -42,17 +44,22 @@ bool llvm::LowerMCS51MachineOperandToMCOperand(const MachineOperand &MO,
   case MachineOperand::MO_Immediate:
     MCOp = MCOperand::createImm(MO.getImm());
     break;
+  case MachineOperand::MO_MachineBasicBlock:
+    MCOp = MCOperand::createExpr(
+        MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), AP.OutContext));
+    break;
   }
   return true;
 }
 
-void llvm::LowerMCS51MachineInstrToMCInst(const MachineInstr *MI,
-                                          MCInst &OutMI) {
+void llvm::LowerMCS51MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                          const AsmPrinter &AP) {
   OutMI.setOpcode(MI->getOpcode());
 
   for (const MachineOperand &MO : MI->operands()) {
     MCOperand MCOp;
-    LowerMCS51MachineOperandToMCOperand(MO, MCOp);
-    OutMI.addOperand(MCOp);
+    if (LowerMCS51MachineOperandToMCOperand(MO, MCOp, AP)) {
+      OutMI.addOperand(MCOp);
+    }
   }
 }

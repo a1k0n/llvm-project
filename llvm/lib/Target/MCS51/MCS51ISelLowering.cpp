@@ -54,8 +54,9 @@ MCS51TargetLowering::MCS51TargetLowering(const TargetMachine &TM,
   setStackPointerRegisterToSaveRestore(MCS51::SP);
 
   // TODO: add all necessary setOperationAction calls.
+  setOperationAction(ISD::BR_CC, MVT::i8, Expand);
 
-  // not totally sure about this; it almost doens't matter if CF is used for
+  // not totally sure about this; it almost doesn't matter if CF is used for
   // bool returns
   setBooleanContents(ZeroOrOneBooleanContent);
 

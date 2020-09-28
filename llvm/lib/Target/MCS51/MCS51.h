@@ -16,9 +16,10 @@
 #define LLVM_LIB_TARGET_MCS51_MCS51_H
 
 #include "MCTargetDesc/MCS51MCTargetDesc.h"
-#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
+class AsmPrinter;
+class FunctionPass;
 class MCS51TargetMachine;
 class MCInst;
 class MCOperand;
@@ -26,9 +27,10 @@ class MachineInstr;
 class MachineOperand;
 
 bool LowerMCS51MachineOperandToMCOperand(const MachineOperand &MO,
-                                         MCOperand &MCOp);
+                                         MCOperand &MCOp, const AsmPrinter &AP);
 
-void LowerMCS51MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI);
+void LowerMCS51MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
+                                    const AsmPrinter &AP);
 
 FunctionPass *createMCS51ISelDag(MCS51TargetMachine &TM);
 }
