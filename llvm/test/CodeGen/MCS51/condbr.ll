@@ -49,14 +49,12 @@ br2:
 define i8 @loopn(i8 %n) nounwind {
 ; MCS51-LABEL: loopn:
 ; MCS51:       ; %bb.0: ; %entry
+; MCS51-NEXT:    MOV R0, R7
 ; MCS51-NEXT:  .LBB2_1: ; %br1
 ; MCS51-NEXT:    ; =>This Inner Loop Header: Depth=1
-; MCS51-NEXT:    MOV R0, 0x88
-; MCS51-NEXT:    DEC R7
-; MCS51-NEXT:    MOV A, R7
-; MCS51-NEXT:    JNZ .LBB2_1
+; MCS51-NEXT:    MOV R7, 0x88
+; MCS51-NEXT:    DJNZ R0, .LBB2_1
 ; MCS51-NEXT:  ; %bb.2: ; %exit
-; MCS51-NEXT:    MOV R7, R0
 ; MCS51-NEXT:    RET
 entry:
   br label %br1

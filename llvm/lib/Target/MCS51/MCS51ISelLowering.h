@@ -30,6 +30,7 @@ enum NodeType : unsigned {
   JNZ,
   JC,
   JNC,
+  DJNZ,
 };
 }
 

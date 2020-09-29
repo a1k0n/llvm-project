@@ -87,8 +87,27 @@ SDValue MCS51TargetLowering::LowerOperation(SDValue Op,
       if (LHS.getOpcode() == ISD::Constant) {
         std::swap(LHS, RHS);
       }
-      // FIXME: non-i8 compares
-      SDValue Diff = DAG.getNode(ISD::XOR, Dl, MVT::i8, LHS, RHS);
+      // If we're doing SETEQ/SETNE with zero, then just generate a JZ/JNZ
+      SDValue Diff = LHS;
+      if (RHS.getOpcode() == ISD::Constant &&
+          cast<ConstantSDNode>(RHS)->getZExtValue() == 0) {
+        // If the comparison happens to be (x-1) == 0, then we can use DJNZ
+        if (CC == ISD::SETNE && LHS.getOpcode() == ISD::ADD &&
+            LHS.getOperand(1).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(LHS.getOperand(1))->getSExtValue() == -1) {
+          LLVM_DEBUG(dbgs() << "BR_CC LHS is add x, -1!\n");
+          // It's possible that the result of (x-1) would have been copied to a
+          // register somewhere, so we're going to replace any copies of that
+          // here and do x-1 computation in DJNZ.
+          DAG.ReplaceAllUsesOfValueWith(LHS, LHS.getOperand(0));
+          return DAG.getNode(MCS51ISD::DJNZ, Dl, Op.getValueType(), Chain, LHS.getOperand(0), Dest);
+        }
+      } else {
+        // Otherwise we need to XOR LHS with RHS to check for equality
+        // (XOR is chosen insetad of subtract because subtract is always done
+        // with carry on 8051, so we can avoid clearing carry this way)
+        Diff = DAG.getNode(ISD::XOR, Dl, MVT::i8, LHS, RHS);
+      }
       Chain = DAG.getCopyToReg(Chain, Dl, MCS51::ACC, Diff);
       unsigned Opcode = CC == ISD::SETEQ ? MCS51ISD::JZ : MCS51ISD::JNZ;
       return DAG.getNode(Opcode, Dl, Op.getValueType(), Chain, Dest);
@@ -137,10 +156,8 @@ SDValue MCS51TargetLowering::LowerFormalArguments(
       report_fatal_error("unhandled argument type");
     }
     const unsigned VReg =
-      RegInfo.createVirtualRegister(&MCS51::GPRnRegClass);
+      RegInfo.createVirtualRegister(&MCS51::GPMovableRegClass);
     RegInfo.addLiveIn(VA.getLocReg(), VReg);
-    // FIXME: the GPRn class isn't exactly the same as the list of regs in the
-    // argument list
     SDValue ArgIn = DAG.getCopyFromReg(Chain, DL, VReg, RegVT);
 
     InVals.push_back(ArgIn);
@@ -209,6 +226,8 @@ const char *MCS51TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "MCS51ISD::JC";
   case MCS51ISD::JNC:
     return "MCS51ISD::JNC";
+  case MCS51ISD::DJNZ:
+    return "MCS51ISD::DJNZ";
   }
   return nullptr;
 }

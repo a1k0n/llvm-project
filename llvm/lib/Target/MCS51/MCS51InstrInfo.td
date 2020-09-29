@@ -4,15 +4,16 @@ include "MCS51InstrFormats.td"
 // MCS51 specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
-def RetFlag : SDNode<"MCS51ISD::RET_FLAG", SDTNone,
+def RetFlag  : SDNode<"MCS51ISD::RET_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 def RetIFlag : SDNode<"MCS51ISD::RETI_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
-def MCS51JNZ : SDNode<"MCS51ISD::JNZ", SDTBr, [SDNPHasChain]>;
-def MCS51JZ  : SDNode<"MCS51ISD::JZ",  SDTBr, [SDNPHasChain]>;
-def MCS51JNC : SDNode<"MCS51ISD::JNC", SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
-def MCS51JC  : SDNode<"MCS51ISD::JC",  SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
+def MCS51JNZ  : SDNode<"MCS51ISD::JNZ", SDTBr, [SDNPHasChain]>;
+def MCS51JZ   : SDNode<"MCS51ISD::JZ",  SDTBr, [SDNPHasChain]>;
+def MCS51JNC  : SDNode<"MCS51ISD::JNC", SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
+def MCS51JC   : SDNode<"MCS51ISD::JC",  SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
+def MCS51DJNZ : SDNode<"MCS51ISD::DJNZ", SDTBrcond, [SDNPHasChain]>;
 
 
 class ImmAddrOperand<int width> : AsmOperandClass {
@@ -177,11 +178,9 @@ def SJMP : MCS51InstRelAddr8<0x80, (outs), (ins reladdr8:$rel8),
   "SJMP", "$rel8", [(br bb:$rel8)]>;
 }
 
-let Constraints = "$dst = $rn" in {
 // pattern is matched in MCS51ISelDAGToDAG; hence no pattern here
-def DJNZ : MCS51InstRnRel8<0xD, (outs GPRn:$dst), (ins GPRn:$rn, reladdr8:$rel8),
-  "DJNZ", "$rn, $rel8", []>;
-}
+def DJNZ : MCS51InstRnRel8<0xD, (outs), (ins GPRn:$rn, reladdr8:$rel8),
+  "DJNZ", "$rn, $rel8", [(MCS51DJNZ GPRn:$rn, bb:$rel8)]>;
 
 // Conditional branches
 let Uses = [ACC] in {

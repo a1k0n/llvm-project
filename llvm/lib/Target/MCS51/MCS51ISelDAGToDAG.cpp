@@ -50,9 +50,15 @@ void MCS51DAGToDAGISel::Select(SDNode *Node) {
     return;
   }
 
-  switch (Node->getOpcode()) {
-  default: break;
-  }
+  /*
+    no custom DAG-DAG transforms
+    SDLoc DL(Node);
+
+    switch (Node->getOpcode()) {
+    default:
+      break;
+    }
+    */
 
   // Select the default instruction.
   SelectCode(Node);
