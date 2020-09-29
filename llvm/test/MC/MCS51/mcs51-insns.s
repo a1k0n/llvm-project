@@ -56,13 +56,13 @@ XCH A, R7
 ; CHECK: XCH A, R7
 ; CHECK-INST: ; encoding: [0xcf]
 INC 0x45
-; CHECK: INC 69
+; CHECK: INC 0x45
 ; CHECK-INST: ; encoding: [0x05,0x45]
 DEC 0x80
-; CHECK: DEC 128
+; CHECK: DEC 0x80
 ; CHECK-INST: ; encoding: [0x15,0x80]
 XRL A, 0x45
-; CHECK: XRL A, 69
+; CHECK: XRL A, 0x45
 ; CHECK-INST: ; encoding: [0x65,0x45]
 XRL A, @R1
 ; CHECK: XRL A, @R1
@@ -98,11 +98,11 @@ MOV 0xBD, A
 ; CHECK-INST:        MOV     R1, R6                          ; encoding: [0xa9,0x06]
 ; CHECK-INST:        MOV     A, @R0                          ; encoding: [0xe6]
 ; CHECK-INST:        MOV     @R1, A                          ; encoding: [0xf7]
-; CHECK-INST:        MOV     A, 186                          ; encoding: [0xe5,0xba]
-; CHECK-INST:        MOV     189, A                          ; encoding: [0xf5,0xbd]
+; CHECK-INST:        MOV     A, 0xba                          ; encoding: [0xe5,0xba]
+; CHECK-INST:        MOV     0xbd, A                          ; encoding: [0xf5,0xbd]
 ; CHECK-OBJDUMP:      25: a8 07         MOV     R0, R7
 ; CHECK-OBJDUMP:      27: a9 06         MOV     R1, R6
 ; CHECK-OBJDUMP:      29: e6            MOV     A, @R0
 ; CHECK-OBJDUMP:      2a: f7            MOV     @R1, A
-; CHECK-OBJDUMP:      2b: e5 ba         MOV     A, 186
-; CHECK-OBJDUMP:      2d: f5 bd         MOV     189, A
+; CHECK-OBJDUMP:      2b: e5 ba         MOV     A, 0xba
+; CHECK-OBJDUMP:      2d: f5 bd         MOV     0xbd, A
