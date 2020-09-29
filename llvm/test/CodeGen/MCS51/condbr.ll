@@ -6,6 +6,7 @@ define i8 @condbr1(i8 %a) nounwind {
 ; MCS51-LABEL: condbr1:
 ; MCS51:       ; %bb.0:
 ; MCS51-NEXT:    MOV A, R7
+; MCS51-NEXT:    XRL A, #-128
 ; MCS51-NEXT:    JZ .LBB0_2
 ; MCS51-NEXT:  ; %bb.1: ; %br1
 ; MCS51-NEXT:    MOV R7, #27
@@ -13,7 +14,7 @@ define i8 @condbr1(i8 %a) nounwind {
 ; MCS51-NEXT:  .LBB0_2: ; %br2
 ; MCS51-NEXT:    MOV R7, #42
 ; MCS51-NEXT:    RET
-  %tst1 = icmp ne i8 %a, 0
+  %tst1 = icmp ne i8 %a, 128
   br i1 %tst1, label %br1, label %br2
 br1:
   ret i8 27

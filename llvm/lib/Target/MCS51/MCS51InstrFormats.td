@@ -41,6 +41,19 @@ class MCS51InstRelAddr8<bits<8> op, dag outs, dag ins, string opcodestr, string 
   let Inst{15-8} = rel8;
 }
 
+class MCS51InstRnRel8<bits<4> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                 : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
+  field bits<16> Inst;
+  bits<8> rel8;
+  bits<3> rn;
+  let Size = 2;
+
+  let Inst{7-4} = op;
+  let Inst{3} = 1;  // rnfill
+  let Inst{2-0} = rn;
+  let Inst{15-8} = rel8;
+}
+
 class InsImm8<bits<4> ophi, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
   field bits<16> Inst;

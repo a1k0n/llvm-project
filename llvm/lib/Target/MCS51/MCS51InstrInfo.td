@@ -9,6 +9,11 @@ def RetFlag : SDNode<"MCS51ISD::RET_FLAG", SDTNone,
 def RetIFlag : SDNode<"MCS51ISD::RETI_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
+def MCS51JNZ : SDNode<"MCS51ISD::JNZ", SDTBr, [SDNPHasChain]>;
+def MCS51JZ  : SDNode<"MCS51ISD::JZ",  SDTBr, [SDNPHasChain]>;
+def MCS51JNC : SDNode<"MCS51ISD::JNC", SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
+def MCS51JC  : SDNode<"MCS51ISD::JC",  SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
+
 
 class ImmAddrOperand<int width> : AsmOperandClass {
   let Name = "ImmAddr" # width;
@@ -172,11 +177,21 @@ def SJMP : MCS51InstRelAddr8<0x80, (outs), (ins reladdr8:$rel8),
   "SJMP", "$rel8", [(br bb:$rel8)]>;
 }
 
+let Constraints = "$dst = $rn" in {
+// pattern is matched in MCS51ISelDAGToDAG; hence no pattern here
+def DJNZ : MCS51InstRnRel8<0xD, (outs GPRn:$dst), (ins GPRn:$rn, reladdr8:$rel8),
+  "DJNZ", "$rn, $rel8", []>;
+}
+
 // Conditional branches
 let Uses = [ACC] in {
+def JC  : MCS51InstRelAddr8<0x40, (outs), (ins reladdr8:$rel8),
+  "JC", "$rel8", [(MCS51JC bb:$rel8)]>;
+def JNC : MCS51InstRelAddr8<0x50, (outs), (ins reladdr8:$rel8),
+  "JNC", "$rel8", [(MCS51JNC bb:$rel8)]>;
 def JZ  : MCS51InstRelAddr8<0x60, (outs), (ins reladdr8:$rel8),
-  "JZ", "$rel8", [(brcond (i8 (seteq ACC, 0)), bb:$rel8)]>;
+  "JZ", "$rel8", [(MCS51JZ bb:$rel8)]>;
 def JNZ : MCS51InstRelAddr8<0x70, (outs), (ins reladdr8:$rel8),
-  "JNZ", "$rel8", [(brcond (i8 (setne ACC, 0)), bb:$rel8)]>;
+  "JNZ", "$rel8", [(MCS51JNZ bb:$rel8)]>;
 }
-}
+} // isBranch, isTerminator

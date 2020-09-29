@@ -26,6 +26,10 @@ enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   RET_FLAG,
   RETI_FLAG,
+  JZ,
+  JNZ,
+  JC,
+  JNC,
 };
 }
 

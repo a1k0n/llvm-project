@@ -54,7 +54,9 @@ MCS51TargetLowering::MCS51TargetLowering(const TargetMachine &TM,
   setStackPointerRegisterToSaveRestore(MCS51::SP);
 
   // TODO: add all necessary setOperationAction calls.
-  setOperationAction(ISD::BR_CC, MVT::i8, Expand);
+  setOperationAction(ISD::BR_CC, MVT::i8, Custom);
+  setOperationAction(ISD::BRCOND, MVT::i8, Expand);
+  setOperationAction(ISD::SELECT, MVT::i8, Expand);
 
   // not totally sure about this; it almost doesn't matter if CF is used for
   // bool returns
@@ -70,7 +72,30 @@ SDValue MCS51TargetLowering::LowerOperation(SDValue Op,
   switch (Op.getOpcode()) {
   default:
     report_fatal_error("unimplemented operand");
+  case ISD::BR_CC: {
+    SDValue Chain = Op.getOperand(0);
+    ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
+    SDValue LHS = Op.getOperand(2);
+    SDValue RHS = Op.getOperand(3);
+    SDValue Dest = Op.getOperand(4);
+    SDLoc Dl(Op);
+    switch (CC) {
+    default:
+      report_fatal_error("unimplemented condition code");
+    case ISD::SETEQ:
+    case ISD::SETNE:
+      if (LHS.getOpcode() == ISD::Constant) {
+        std::swap(LHS, RHS);
+      }
+      // FIXME: non-i8 compares
+      SDValue Diff = DAG.getNode(ISD::XOR, Dl, MVT::i8, LHS, RHS);
+      Chain = DAG.getCopyToReg(Chain, Dl, MCS51::ACC, Diff);
+      unsigned Opcode = CC == ISD::SETEQ ? MCS51ISD::JZ : MCS51ISD::JNZ;
+      return DAG.getNode(Opcode, Dl, Op.getValueType(), Chain, Dest);
+    }
+  } break;
   }
+  return Op;
 }
 
 // Calling Convention Implementation.
@@ -176,6 +201,14 @@ const char *MCS51TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "MCS51ISD::RET_FLAG";
   case MCS51ISD::RETI_FLAG:
     return "MCS51ISD::RETI_FLAG";
+  case MCS51ISD::JZ:
+    return "MCS51ISD::JZ";
+  case MCS51ISD::JNZ:
+    return "MCS51ISD::JNZ";
+  case MCS51ISD::JC:
+    return "MCS51ISD::JC";
+  case MCS51ISD::JNC:
+    return "MCS51ISD::JNC";
   }
   return nullptr;
 }

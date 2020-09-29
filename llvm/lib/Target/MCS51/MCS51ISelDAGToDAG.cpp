@@ -50,6 +50,10 @@ void MCS51DAGToDAGISel::Select(SDNode *Node) {
     return;
   }
 
+  switch (Node->getOpcode()) {
+  default: break;
+  }
+
   // Select the default instruction.
   SelectCode(Node);
 }
