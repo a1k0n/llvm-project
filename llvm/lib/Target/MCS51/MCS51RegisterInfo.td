@@ -62,3 +62,5 @@ def GPRAny : RegisterClass<"MCS51", [i8], 8,
 def ACCClass : RegisterClass<"MCS51", [i8], 8, (add ACC)>;
 def DPTRClass : RegisterClass<"MCS51", [i16], 8, (add DPTR)>;
 def SPClass : RegisterClass<"MCS51", [i8], 8, (add SP)>;
+
+def FlagClass : RegisterClass<"MCS51", [i1], 1, (add CF)>;

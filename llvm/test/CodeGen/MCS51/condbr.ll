@@ -69,3 +69,29 @@ exit:
   ret i8 %0
 }
 
+define i8 @loopntwist(i8 %n) nounwind {
+; MCS51-LABEL: loopntwist:
+; MCS51:       ; %bb.0: ; %entry
+; MCS51-NEXT:    DEC R7
+; MCS51-NEXT:  .LBB3_1: ; %br1
+; MCS51-NEXT:    ; =>This Inner Loop Header: Depth=1
+; MCS51-NEXT:    MOV A, 0x88
+; MCS51-NEXT:    MOV 0x88, R7
+; MCS51-NEXT:    DEC R7
+; MCS51-NEXT:    CJNE R7, #-1, .LBB3_1
+; MCS51-NEXT:  ; %bb.2: ; %exit
+; MCS51-NEXT:    MOV R7, A
+; MCS51-NEXT:    RET
+entry:
+  br label %br1
+br1:
+  %i = phi i8 [ %n, %entry ], [ %i.next, %br1 ]
+  %sfr = inttoptr i8 136 to i8*
+  %0 = load volatile i8, i8* %sfr
+  %i.next = sub i8 %i, 1
+  store volatile i8 %i.next, i8* %sfr
+  %cond = icmp eq i8 %i.next, 0
+  br i1 %cond, label %exit, label %br1
+exit:
+  ret i8 %0
+}

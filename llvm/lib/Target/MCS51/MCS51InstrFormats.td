@@ -17,7 +17,7 @@ class Inst8<dag outs, dag ins, string opcodestr, string argstr, list<dag> patter
   let Size = 1;
 }
 
-class MCS51InstAddr16<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+class InstAddr16<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
   field bits<24> Inst;
   bits<16> addr16;
@@ -31,7 +31,7 @@ class MCS51InstAddr16<bits<8> op, dag outs, dag ins, string opcodestr, string ar
   let Inst{23-16} = addr16{7-0};
 }
 
-class MCS51InstRelAddr8<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+class InstRelAddr8<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
   field bits<16> Inst;
   bits<8> rel8;
@@ -41,7 +41,7 @@ class MCS51InstRelAddr8<bits<8> op, dag outs, dag ins, string opcodestr, string 
   let Inst{15-8} = rel8;
 }
 
-class MCS51InstRnRel8<bits<4> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+class InstRnRel8<bits<4> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
                  : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
   field bits<16> Inst;
   bits<8> rel8;
@@ -113,6 +113,21 @@ class InstRnImm8<bits<4> op, dag outs, dag ins, string opcodestr, string argstr,
   let Inst{3} = 1;  // rnfill
   let Inst{2-0} = rn;
   let Inst{15-8} = imm8;
+}
+
+class InstRnOp8Op8<bits<4> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
+                   : MCS51Inst<outs, ins, opcodestr, argstr, pattern> {
+  let Size = 3;
+  field bits<24> Inst;
+  bits<3> rn;
+  bits<8> opA;
+  bits<8> opB;
+
+  let Inst{7-4} = op;
+  let Inst{3} = 1;  // rnfill
+  let Inst{2-0} = rn;
+  let Inst{15-8} = opA;
+  let Inst{23-16} = opB;
 }
 
 class InstOp8Op8<bits<8> op, dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>

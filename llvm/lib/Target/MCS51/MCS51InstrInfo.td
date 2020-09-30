@@ -9,11 +9,21 @@ def RetFlag  : SDNode<"MCS51ISD::RET_FLAG", SDTNone,
 def RetIFlag : SDNode<"MCS51ISD::RETI_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
 
+def SDTDJNZ : SDTypeProfile<0, 2, [
+  SDTCisInt<0>, SDTCisVT<1, OtherVT>,
+]>;
+
+def SDTCJNE : SDTypeProfile<0, 3, [
+  SDTCisSameAs<0, 1>, SDTCisVT<2, OtherVT>,
+]>;
+
 def MCS51JNZ  : SDNode<"MCS51ISD::JNZ", SDTBr, [SDNPHasChain]>;
 def MCS51JZ   : SDNode<"MCS51ISD::JZ",  SDTBr, [SDNPHasChain]>;
 def MCS51JNC  : SDNode<"MCS51ISD::JNC", SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
 def MCS51JC   : SDNode<"MCS51ISD::JC",  SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
-def MCS51DJNZ : SDNode<"MCS51ISD::DJNZ", SDTBrcond, [SDNPHasChain]>;
+def MCS51CJNE : SDNode<"MCS51ISD::CJNE", SDTCJNE, [SDNPHasChain]>;
+def MCS51DJNZ : SDNode<"MCS51ISD::DJNZ", SDTDJNZ, [SDNPHasChain]>;
+def MCS51SUBB : SDNode<"MCS51ISD::SUBB", SDTIntBinOp, [SDNPHasChain]>;
 
 
 class ImmAddrOperand<int width> : AsmOperandClass {
@@ -80,6 +90,13 @@ let Uses = [ACC], Defs = [ACC] in {
 
 let Defs = [ACC] in {
   def CLRA : InstNoArgs<0xE4, (outs), (ins), "CLR", "A", [(set ACC, 0)]>;
+  let Uses = [ACC] in {
+    def CPLA : InstNoArgs<0xF4, (outs), (ins), "CPL", "A", [(set ACC, (xor ACC, -1))]>;
+  }
+}
+
+let Defs = [CF] in {
+  def CLRC : InstNoArgs<0xC3, (outs), (ins), "CLR", "C", [(set CF, 0)]>;
 }
 
 multiclass alu_inst<bits<4> opc, string mnemonic, dag op> {
@@ -89,16 +106,18 @@ multiclass alu_inst<bits<4> opc, string mnemonic, dag op> {
   def _Adir8 : InsDir8<opc, (outs), (ins direct:$a8), mnemonic, "A, $a8", [(set ACC, (op ACC, (load direct:$a8)))]>;
 }
 
-let Uses = [ACC], Defs = [ACC, PSW] in {
-  defm ADD  : alu_inst<2, "ADD",  add>;
-  defm ADDC : alu_inst<3, "ADDC", addc>;
-  defm SUBB : alu_inst<9, "SUBB", subc>;
-}
-
 let Uses = [ACC], Defs = [ACC] in {
   defm ORL : alu_inst<4, "ORL", or>;
   defm ANL : alu_inst<5, "ANL", and>;
   defm XRL : alu_inst<6, "XRL", xor>;
+}
+
+let Uses = [ACC], Defs = [ACC, CF] in {
+  defm ADD : alu_inst<2, "ADD", add>;
+  let Uses = [CF] in {
+    defm ADDC : alu_inst<3, "ADDC", adde>;
+    defm SUBB : alu_inst<9, "SUBB", MCS51SUBB>;
+  }
 }
 
 // FIXME: pattern for swapping A, Rn?
@@ -169,28 +188,30 @@ let Uses = [ACC] in {
 // TODO: ACALL / AJMP are somewhat unlikely to be used by the compiler but
 // should be dis/assemblable at least
 
-def LCALL : MCS51InstAddr16<0x12, (outs), (ins addr16:$addr16), "LCALL", "$addr16", []>;
+def LCALL : InstAddr16<0x12, (outs), (ins addr16:$addr16), "LCALL", "$addr16", []>;
 
 let isBranch = 1, isTerminator = 1 in {
 let isBarrier = 1 in {
-def LJMP : MCS51InstAddr16<0x02, (outs), (ins addr16:$addr16), "LJMP", "$addr16", []>;
-def SJMP : MCS51InstRelAddr8<0x80, (outs), (ins reladdr8:$rel8),
+def LJMP : InstAddr16<0x02, (outs), (ins addr16:$addr16), "LJMP", "$addr16", []>;
+def SJMP : InstRelAddr8<0x80, (outs), (ins reladdr8:$rel8),
   "SJMP", "$rel8", [(br bb:$rel8)]>;
 }
 
 // pattern is matched in MCS51ISelDAGToDAG; hence no pattern here
-def DJNZ : MCS51InstRnRel8<0xD, (outs), (ins GPRn:$rn, reladdr8:$rel8),
+def DJNZ : InstRnRel8<0xD, (outs), (ins GPRn:$rn, reladdr8:$rel8),
   "DJNZ", "$rn, $rel8", [(MCS51DJNZ GPRn:$rn, bb:$rel8)]>;
+def CJNE : InstRnOp8Op8<0xB, (outs), (ins GPRn:$rn, imm8:$opA, reladdr8:$opB),
+  "CJNE", "$rn, #$opA, $opB", [(MCS51CJNE GPRn:$rn, imm8:$opA, bb:$opB)]>;
 
 // Conditional branches
 let Uses = [ACC] in {
-def JC  : MCS51InstRelAddr8<0x40, (outs), (ins reladdr8:$rel8),
+def JC  : InstRelAddr8<0x40, (outs), (ins reladdr8:$rel8),
   "JC", "$rel8", [(MCS51JC bb:$rel8)]>;
-def JNC : MCS51InstRelAddr8<0x50, (outs), (ins reladdr8:$rel8),
+def JNC : InstRelAddr8<0x50, (outs), (ins reladdr8:$rel8),
   "JNC", "$rel8", [(MCS51JNC bb:$rel8)]>;
-def JZ  : MCS51InstRelAddr8<0x60, (outs), (ins reladdr8:$rel8),
+def JZ  : InstRelAddr8<0x60, (outs), (ins reladdr8:$rel8),
   "JZ", "$rel8", [(MCS51JZ bb:$rel8)]>;
-def JNZ : MCS51InstRelAddr8<0x70, (outs), (ins reladdr8:$rel8),
+def JNZ : InstRelAddr8<0x70, (outs), (ins reladdr8:$rel8),
   "JNZ", "$rel8", [(MCS51JNZ bb:$rel8)]>;
 }
 } // isBranch, isTerminator

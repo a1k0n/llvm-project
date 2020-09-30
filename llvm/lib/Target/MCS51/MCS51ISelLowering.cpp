@@ -58,6 +58,10 @@ MCS51TargetLowering::MCS51TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BRCOND, MVT::i8, Expand);
   setOperationAction(ISD::SELECT, MVT::i8, Expand);
 
+  // TODO: take care of carrying addition / borrowing subtraction
+  // setOperationAction(ISD::ADDC, MVT::i8, Custom);
+  // setOperationAction(ISD::SUB, MVT::i8, Custom);
+
   // not totally sure about this; it almost doesn't matter if CF is used for
   // bool returns
   setBooleanContents(ZeroOrOneBooleanContent);
@@ -89,23 +93,38 @@ SDValue MCS51TargetLowering::LowerOperation(SDValue Op,
       }
       // If we're doing SETEQ/SETNE with zero, then just generate a JZ/JNZ
       SDValue Diff = LHS;
-      if (RHS.getOpcode() == ISD::Constant &&
-          cast<ConstantSDNode>(RHS)->getZExtValue() == 0) {
-        // If the comparison happens to be (x-1) == 0, then we can use DJNZ
-        if (CC == ISD::SETNE && LHS.getOpcode() == ISD::ADD &&
-            LHS.getOperand(1).getOpcode() == ISD::Constant &&
-            cast<ConstantSDNode>(LHS.getOperand(1))->getSExtValue() == -1) {
-          LLVM_DEBUG(dbgs() << "BR_CC LHS is add x, -1!\n");
-          // It's possible that the result of (x-1) would have been copied to a
-          // register somewhere, so we're going to replace any copies of that
-          // here and do x-1 computation in DJNZ.
-          DAG.ReplaceAllUsesOfValueWith(LHS, LHS.getOperand(0));
-          return DAG.getNode(MCS51ISD::DJNZ, Dl, Op.getValueType(), Chain, LHS.getOperand(0), Dest);
+      if (RHS.getOpcode() == ISD::Constant) {
+        if (cast<ConstantSDNode>(RHS)->getZExtValue() == 0) {
+          // If the comparison happens to be (x-1) == 0, then we can use DJNZ
+          if (CC == ISD::SETNE && LHS.getOpcode() == ISD::ADD &&
+              LHS.getOperand(1).getOpcode() == ISD::Constant &&
+              cast<ConstantSDNode>(LHS.getOperand(1))->getSExtValue() == -1) {
+            if (LHS.getNode()->use_size() == 2) {
+              // If there are 2 uses, assume it's a register copy and the BR_CC
+              // itself now we need to get rid of the CopyToReg use so we'll
+              // just replace it with the un-decremented input value and DJNZ
+              // will actually decrement it.
+
+              // This is probably not the right way to do this.
+              DAG.ReplaceAllUsesOfValueWith(LHS, LHS.getOperand(0));
+              return DAG.getNode(MCS51ISD::DJNZ, Dl, Op.getValueType(), Chain,
+                                 LHS.getOperand(0), Dest);
+            }
+          }
+        } else if (CC == ISD::SETNE) {
+          // comparing with nonzero constant; candidate for CJNE
+          return DAG.getNode(MCS51ISD::CJNE, Dl, Op.getValueType(), Chain, LHS,
+                             RHS, Dest);
+        } else {
+          // TODO: reverse the branch!
+
+          // Otherwise we need to XOR LHS with RHS to check for equality
+          // (XOR is chosen insetad of subtract because subtract is always done
+          // with carry on 8051, so we can avoid clearing carry this way)
+          Diff = DAG.getNode(ISD::XOR, Dl, MVT::i8, LHS, RHS);
         }
       } else {
-        // Otherwise we need to XOR LHS with RHS to check for equality
-        // (XOR is chosen insetad of subtract because subtract is always done
-        // with carry on 8051, so we can avoid clearing carry this way)
+        // non-constant RHS; still need to generate a comparison
         Diff = DAG.getNode(ISD::XOR, Dl, MVT::i8, LHS, RHS);
       }
       Chain = DAG.getCopyToReg(Chain, Dl, MCS51::ACC, Diff);
@@ -228,6 +247,14 @@ const char *MCS51TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "MCS51ISD::JNC";
   case MCS51ISD::DJNZ:
     return "MCS51ISD::DJNZ";
+  case MCS51ISD::CJNE:
+    return "MCS51ISD::CJNE";
+  case MCS51ISD::ADD:
+    return "MCS51ISD::ADD";
+  case MCS51ISD::ADDC:
+    return "MCS51ISD::ADDC";
+  case MCS51ISD::SUBB:
+    return "MCS51ISD::SUBB";
   }
   return nullptr;
 }
