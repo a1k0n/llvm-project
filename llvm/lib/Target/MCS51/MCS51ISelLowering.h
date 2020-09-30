@@ -32,6 +32,7 @@ enum NodeType : unsigned {
   JNC,
   DJNZ,
   CJNE,
+  CJNE0,
   ADD,
   ADDC,
   SUBB,

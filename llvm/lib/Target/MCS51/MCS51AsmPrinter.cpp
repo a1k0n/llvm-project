@@ -81,7 +81,7 @@ void MCS51AsmPrinter::emitInstruction(const MachineInstr *MI) {
     MovInst.addOperand(MCSrc);
     EmitToStreamer(*OutStreamer, MovInst);
     return;
-  }
+  } // MOVAnyImm
   case MCS51::MOVAnyDirect: {
     Register Rd = MI->getOperand(0).getReg();
     MCInst MovInst;
@@ -100,7 +100,7 @@ void MCS51AsmPrinter::emitInstruction(const MachineInstr *MI) {
     MovInst.addOperand(MCSrc);
     EmitToStreamer(*OutStreamer, MovInst);
     return;
-  }
+  } // MOVAnyDirect
   case MCS51::MOVDirectAny: {
     Register Rs = MI->getOperand(1).getReg();
     MCInst MovInst;
@@ -119,8 +119,29 @@ void MCS51AsmPrinter::emitInstruction(const MachineInstr *MI) {
     }
     EmitToStreamer(*OutStreamer, MovInst);
     return;
-  }
-  }
+  } // MOVDirectAny
+  case MCS51::CJNEAnyimm0: {
+    Register Ra = MI->getOperand(0).getReg();
+    MCInst Inst;
+    if (Ra == MCS51::ACC) {
+      // CJNE A, #imm8, .+dest
+      Inst.setOpcode(MCS51::CJNEAimm);
+    } else {
+      // CJNE Rn, #imm8, .+dest
+      Inst.setOpcode(MCS51::CJNERnimm);
+      MCOperand MCRa;
+      lowerOperand(MI->getOperand(0), MCRa);
+      Inst.addOperand(MCRa);
+    }
+    MCOperand Op1, Op2;
+    lowerOperand(MI->getOperand(1), Op1);
+    lowerOperand(MI->getOperand(2), Op2);
+    Inst.addOperand(Op1);
+    Inst.addOperand(Op2);
+    EmitToStreamer(*OutStreamer, Inst);
+    return;
+  } // CJNEAnyImm0
+  }  // switch(MI->getOpcode())
 
   MCInst TmpInst;
   LowerMCS51MachineInstrToMCInst(MI, TmpInst, *this);

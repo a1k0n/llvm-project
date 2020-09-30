@@ -93,3 +93,51 @@ br1:
 exit:
   ret i8 %0
 }
+
+define i8 @unsignedless(i8 %n) nounwind {
+; MCS51-LABEL: unsignedless:
+; MCS51:       ; %bb.0:
+; MCS51-NEXT:    CJNE R7, #9, .+0
+; MCS51-NEXT:    JNC .LBB4_2
+; MCS51-NEXT:  ; %bb.1: ; %br1
+; MCS51-NEXT:    INC R7
+; MCS51-NEXT:    MOV A, R7
+; MCS51-NEXT:    RET
+; MCS51-NEXT:  .LBB4_2: ; %br2
+; MCS51-NEXT:    DEC R7
+; MCS51-NEXT:    MOV A, R7
+; MCS51-NEXT:    RET
+  %tst1 = icmp ult i8 %n, 10
+  br i1 %tst1, label %br1, label %br2
+br1:
+  %1 = add i8 %n, 1
+  ret i8 %1
+br2:
+  %2 = add i8 %n, -1
+  ret i8 %2
+}
+
+define i8 @hexdigit1(i8 %n) nounwind {
+; MCS51-LABEL: hexdigit1:
+; MCS51:       ; %bb.0:
+; MCS51-NEXT:    MOV A, R7
+; MCS51-NEXT:    ANL A, #15
+; MCS51-NEXT:    CJNE A, #9, .+0
+; MCS51-NEXT:    JNC .LBB5_2
+; MCS51-NEXT:  ; %bb.1: ; %br1
+; MCS51-NEXT:    ORL A, #48
+; MCS51-NEXT:    RET
+; MCS51-NEXT:  .LBB5_2: ; %br2
+; MCS51-NEXT:    ADD A, #87
+; MCS51-NEXT:    RET
+  %n1 = and i8 %n, 15
+  %tst1 = icmp ult i8 %n1, 10
+  br i1 %tst1, label %br1, label %br2
+br1:
+  %1 = add i8 %n1, 48
+  ret i8 %1
+br2:
+  %2 = add i8 %n1, 87
+  ret i8 %2
+}
+

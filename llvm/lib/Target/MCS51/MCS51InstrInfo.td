@@ -17,11 +17,16 @@ def SDTCJNE : SDTypeProfile<0, 3, [
   SDTCisSameAs<0, 1>, SDTCisVT<2, OtherVT>,
 ]>;
 
+def SDTCJNE0 : SDTypeProfile<0, 3, [
+  SDTCisSameAs<0, 1>, SDTCisInt<2>,
+]>;
+
 def MCS51JNZ  : SDNode<"MCS51ISD::JNZ", SDTBr, [SDNPHasChain]>;
 def MCS51JZ   : SDNode<"MCS51ISD::JZ",  SDTBr, [SDNPHasChain]>;
 def MCS51JNC  : SDNode<"MCS51ISD::JNC", SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
 def MCS51JC   : SDNode<"MCS51ISD::JC",  SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
 def MCS51CJNE : SDNode<"MCS51ISD::CJNE", SDTCJNE, [SDNPHasChain]>;
+def MCS51CJNE0 : SDNode<"MCS51ISD::CJNE0", SDTCJNE0, [SDNPHasChain]>;
 def MCS51DJNZ : SDNode<"MCS51ISD::DJNZ", SDTDJNZ, [SDNPHasChain]>;
 def MCS51SUBB : SDNode<"MCS51ISD::SUBB", SDTIntBinOp, [SDNPHasChain]>;
 
@@ -211,12 +216,17 @@ def CJNEAimm : InstOp8Op8<0xB4, (outs), (ins imm8:$opA, reladdr8:$opB),
   //       CJNE @Ri, #imm8, rel8
 }
 
+let isPseudo = 1, isCodeGenOnly = 1 in {
+def CJNEAnyimm0 : InstOp8Op8<0xB4, (outs), (ins GPMovable:$ra, imm8:$opA, imm8:$opB),
+  "CJNE", "$ra, #$opA, $opB", [(MCS51CJNE0 GPMovable:$ra, imm8:$opA, imm8:$opB)]>;
+}  // isPseudo, isCodeGenOnly
+
 // Conditional branches
-let Uses = [ACC] in {
 def JC  : InstRelAddr8<0x40, (outs), (ins reladdr8:$rel8),
   "JC", "$rel8", [(MCS51JC bb:$rel8)]>;
 def JNC : InstRelAddr8<0x50, (outs), (ins reladdr8:$rel8),
   "JNC", "$rel8", [(MCS51JNC bb:$rel8)]>;
+let Uses = [ACC] in {
 def JZ  : InstRelAddr8<0x60, (outs), (ins reladdr8:$rel8),
   "JZ", "$rel8", [(MCS51JZ bb:$rel8)]>;
 def JNZ : InstRelAddr8<0x70, (outs), (ins reladdr8:$rel8),

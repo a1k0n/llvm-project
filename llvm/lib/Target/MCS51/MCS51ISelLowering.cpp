@@ -83,14 +83,14 @@ SDValue MCS51TargetLowering::LowerOperation(SDValue Op,
     SDValue RHS = Op.getOperand(3);
     SDValue Dest = Op.getOperand(4);
     SDLoc Dl(Op);
+    if (LHS.getOpcode() == ISD::Constant) {
+      std::swap(LHS, RHS);
+    }
     switch (CC) {
     default:
       report_fatal_error("unimplemented condition code");
     case ISD::SETEQ:
-    case ISD::SETNE:
-      if (LHS.getOpcode() == ISD::Constant) {
-        std::swap(LHS, RHS);
-      }
+    case ISD::SETNE: {
       // If we're doing SETEQ/SETNE with zero, then just generate a JZ/JNZ
       SDValue Diff = LHS;
       if (RHS.getOpcode() == ISD::Constant) {
@@ -130,9 +130,40 @@ SDValue MCS51TargetLowering::LowerOperation(SDValue Op,
       Chain = DAG.getCopyToReg(Chain, Dl, MCS51::ACC, Diff);
       unsigned Opcode = CC == ISD::SETEQ ? MCS51ISD::JZ : MCS51ISD::JNZ;
       return DAG.getNode(Opcode, Dl, Op.getValueType(), Chain, Dest);
-    }
-  } break;
-  }
+    } break; // ISD::SETEQ/SETNE
+    case ISD::SETUGT:
+    case ISD::SETUGE:
+    case ISD::SETULE:
+    case ISD::SETULT: {
+      // we need to generate a carry here; we have a few options:
+      // we can use a combination of CJNE + JC/JNC which will set carry without
+      // clobbering A we can copy LHS into A and:
+      //  - ADD A, #-<RHS> (if RHS is immediate)
+      //  - copy 0 into CF and SUBB A, <RHS>
+      if (RHS.getOpcode() == ISD::Constant) {
+        if (CC == ISD::SETULE) { // add 1 to RHS
+          RHS = DAG.getConstant(
+              cast<ConstantSDNode>(RHS.getOperand(1))->getZExtValue() + 1, Dl,
+              RHS.getValueType());
+        }
+        if (CC == ISD::SETUGE) { // -1 to RHS
+          RHS = DAG.getConstant(
+              cast<ConstantSDNode>(RHS.getOperand(1))->getZExtValue() - 1, Dl,
+              RHS.getValueType());
+        }
+        // generate a CJNE <LHS, RHS>, +0
+        Chain = DAG.getNode(MCS51ISD::CJNE0, Dl, Op.getValueType(), Chain, LHS,
+                            RHS, DAG.getConstant(0, Dl, MVT::i8));
+        // followed by JC (le/lt) or JNC (ge/gt)
+        unsigned Opcode = (CC == ISD::SETUGT || CC == ISD::SETUGE)
+                              ? MCS51ISD::JNC
+                              : MCS51ISD::JC;
+        return DAG.getNode(Opcode, Dl, Op.getValueType(), Chain, Dest);
+      }
+    } break; // ISD::SETULE/SETULT
+    }        // switch(CC)
+  } break;   // ISD::BR_CC
+  }          // switch(Op)
   return Op;
 }
 
@@ -249,6 +280,8 @@ const char *MCS51TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "MCS51ISD::DJNZ";
   case MCS51ISD::CJNE:
     return "MCS51ISD::CJNE";
+  case MCS51ISD::CJNE0:
+    return "MCS51ISD::CJNE0";
   case MCS51ISD::ADD:
     return "MCS51ISD::ADD";
   case MCS51ISD::ADDC:
