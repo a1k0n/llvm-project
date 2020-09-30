@@ -174,7 +174,8 @@ unsigned MCS51MCCodeEmitter::encodeRelBrTarget(const MCInst &MI, unsigned OpNo,
     switch (MI.getOpcode()) {
     default:
       break;
-    case MCS51::CJNE:
+    case MCS51::CJNERnimm:
+    case MCS51::CJNEAimm:
       Offset = 2;
       break;
     }

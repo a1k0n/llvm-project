@@ -7,7 +7,6 @@ define i8 @addimm(i8 %a) nounwind {
 ; MCS51:       ; %bb.0:
 ; MCS51-NEXT:    MOV A, R7
 ; MCS51-NEXT:    ADD A, #42
-; MCS51-NEXT:    MOV R7, A
 ; MCS51-NEXT:    RET
   %1 = add i8 %a, 42
   ret i8 %1
@@ -18,10 +17,20 @@ define i8 @double(i8 %a) nounwind {
 ; MCS51:       ; %bb.0:
 ; MCS51-NEXT:    MOV A, R7
 ; MCS51-NEXT:    ADD A, R7
-; MCS51-NEXT:    MOV R7, A
 ; MCS51-NEXT:    RET
   %1 = add i8 %a, %a
   ret i8 %1
 }
 
+define i8 @add(i8 %a, i8 %b) nounwind {
+; MCS51-LABEL: add:
+; MCS51:       ; %bb.0:
+; MCS51-NEXT:    MOV A, R7
+; MCS51-NEXT:    ADD A, R6
+; MCS51-NEXT:    RET
+  %1 = add i8 %a, %b
+  ret i8 %1
+}
 
+; define i8 @sub(i8 %a, i8 %b) nounwind {
+; }

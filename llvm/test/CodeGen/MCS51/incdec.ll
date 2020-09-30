@@ -8,6 +8,7 @@ define i8 @add1(i8 %a) nounwind {
 ; MCS51-LABEL: add1:
 ; MCS51:       ; %bb.0:
 ; MCS51-NEXT:    INC R7
+; MCS51-NEXT:    MOV A, R7
 ; MCS51-NEXT:    RET
   %1 = add i8 %a, 1
   ret i8 %1
@@ -17,6 +18,7 @@ define i8 @sub1(i8 %a) nounwind {
 ; MCS51-LABEL: sub1:
 ; MCS51:       ; %bb.0:
 ; MCS51-NEXT:    DEC R7
+; MCS51-NEXT:    MOV A, R7
 ; MCS51-NEXT:    RET
   %1 = sub i8 %a, 1
   ret i8 %1

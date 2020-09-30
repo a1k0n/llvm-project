@@ -4,7 +4,7 @@
 // very little real-world input; please suggest improvements
 def RetCC_MCS51 : CallingConv<[
   CCIfType<[i1], CCAssignToReg<[CF]>>,
-  CCIfType<[i8], CCAssignToReg<[R7, R6, R5, R4, R3, R2]>>,
+  CCIfType<[i8], CCAssignToReg<[ACC, R7, R6, R5, R4, R3, R2]>>,
   CCIfType<[i16], CCAssignToReg<[R6R7, R4R5, R2R3]>>
 ]>;
 

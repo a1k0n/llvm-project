@@ -9,10 +9,10 @@ define i8 @condbr1(i8 %a) nounwind {
 ; MCS51-NEXT:    XRL A, #-128
 ; MCS51-NEXT:    JZ .LBB0_2
 ; MCS51-NEXT:  ; %bb.1: ; %br1
-; MCS51-NEXT:    MOV R7, #27
+; MCS51-NEXT:    MOV A, #27
 ; MCS51-NEXT:    RET
 ; MCS51-NEXT:  .LBB0_2: ; %br2
-; MCS51-NEXT:    MOV R7, #42
+; MCS51-NEXT:    MOV A, #42
 ; MCS51-NEXT:    RET
   %tst1 = icmp ne i8 %a, 128
   br i1 %tst1, label %br1, label %br2
@@ -31,7 +31,7 @@ define i8 @sfrloop() #0 {
 ; MCS51-NEXT:    ANL A, #64
 ; MCS51-NEXT:    JNZ .LBB1_1
 ; MCS51-NEXT:  ; %bb.2: ; %br2
-; MCS51-NEXT:    MOV R7, 0x89
+; MCS51-NEXT:    MOV A, 0x89
 ; MCS51-NEXT:    RET
   br label %br1
 br1:
@@ -49,11 +49,10 @@ br2:
 define i8 @loopn(i8 %n) nounwind {
 ; MCS51-LABEL: loopn:
 ; MCS51:       ; %bb.0: ; %entry
-; MCS51-NEXT:    MOV R0, R7
 ; MCS51-NEXT:  .LBB2_1: ; %br1
 ; MCS51-NEXT:    ; =>This Inner Loop Header: Depth=1
-; MCS51-NEXT:    MOV R7, 0x88
-; MCS51-NEXT:    DJNZ R0, .LBB2_1
+; MCS51-NEXT:    MOV A, 0x88
+; MCS51-NEXT:    DJNZ R7, .LBB2_1
 ; MCS51-NEXT:  ; %bb.2: ; %exit
 ; MCS51-NEXT:    RET
 entry:
@@ -80,7 +79,6 @@ define i8 @loopntwist(i8 %n) nounwind {
 ; MCS51-NEXT:    DEC R7
 ; MCS51-NEXT:    CJNE R7, #-1, .LBB3_1
 ; MCS51-NEXT:  ; %bb.2: ; %exit
-; MCS51-NEXT:    MOV R7, A
 ; MCS51-NEXT:    RET
 entry:
   br label %br1

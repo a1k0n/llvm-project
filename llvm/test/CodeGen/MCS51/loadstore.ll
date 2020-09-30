@@ -5,7 +5,7 @@
 define i8 @loadsfr() nounwind {
 ; MCS51-LABEL: loadsfr:
 ; MCS51:       ; %bb.0:
-; MCS51-NEXT:    MOV R7, 0x82
+; MCS51-NEXT:    MOV A, 0x82
 ; MCS51-NEXT:    RET
   %sfr = inttoptr i8 130 to i8*
   %1 = load volatile i8, i8* %sfr
@@ -53,7 +53,6 @@ define i8 @volloadplus1(i8 *%a) nounwind {
 ; MCS51-NEXT:    MOV A, @R0
 ; MCS51-NEXT:    INC R0
 ; MCS51-NEXT:    MOV A, @R0
-; MCS51-NEXT:    MOV R7, A
 ; MCS51-NEXT:    RET
   %1 = getelementptr i8, i8 *%a, i8 1
   %2 = load i8, i8* %1
@@ -76,7 +75,6 @@ define i8 @checkflag() nounwind {
 ; MCS51:       ; %bb.0:
 ; MCS51-NEXT:    MOV A, 0xe3
 ; MCS51-NEXT:    ANL A, #64
-; MCS51-NEXT:    MOV R7, A
 ; MCS51-NEXT:    RET
   %sfr = inttoptr i8 227 to i8*
   %1 = load volatile i8, i8* %sfr
@@ -95,3 +93,4 @@ define void @dir8todir8() nounwind {
   store i8 %1, i8* %ptr2
   ret void
 }
+

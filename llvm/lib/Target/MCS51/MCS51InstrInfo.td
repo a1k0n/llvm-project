@@ -140,6 +140,8 @@ let mayLoad = 1, mayStore = 1 in {
 // expansion. This gives the register allocator more room to deal with loads and
 // stores.
 let isPseudo = 1, isCodeGenOnly = 1 in {
+  def MOVAnyImm : MCS51Inst<(outs GPMovable:$dst), (ins imm8:$imm8),
+    "MOV", "$dst, #$imm8", [(set GPMovable:$dst, imm8:$imm8)]>;
   let mayLoad = 1 in {
   def MOVAnyDirect : MCS51Inst<(outs GPMovable:$dst), (ins direct:$src),
     "MOV", "$dst, $src", [(set GPMovable:$dst, (load direct:$src))]>;
@@ -168,7 +170,7 @@ let mayStore = 1 in {
 let Defs = [ACC] in {
   def MOVADir  : InsDir8<0xE, (outs), (ins direct:$a8),
     "MOV", "A, $a8", [(set ACC, (load direct:$a8))]>;
-  def MOVAimm8 : InsImm8<0x7, (outs), (ins imm8:$imm8),
+  def MOVAImm8 : InsImm8<0x7, (outs), (ins imm8:$imm8),
     "MOV", "A, #$imm8", [(set ACC, imm8:$imm8)]>;
   def MOVARn   : InsARn<0xE, (outs), (ins GPRn:$rn),
     "MOV", "A, $rn", [(set ACC, GPRn:$rn)]>;
@@ -200,8 +202,14 @@ def SJMP : InstRelAddr8<0x80, (outs), (ins reladdr8:$rel8),
 // pattern is matched in MCS51ISelDAGToDAG; hence no pattern here
 def DJNZ : InstRnRel8<0xD, (outs), (ins GPRn:$rn, reladdr8:$rel8),
   "DJNZ", "$rn, $rel8", [(MCS51DJNZ GPRn:$rn, bb:$rel8)]>;
-def CJNE : InstRnOp8Op8<0xB, (outs), (ins GPRn:$rn, imm8:$opA, reladdr8:$opB),
+def CJNERnimm : InstRnOp8Op8<0xB, (outs), (ins GPRn:$rn, imm8:$opA, reladdr8:$opB),
   "CJNE", "$rn, #$opA, $opB", [(MCS51CJNE GPRn:$rn, imm8:$opA, bb:$opB)]>;
+let Uses = [ACC] in {
+def CJNEAimm : InstOp8Op8<0xB4, (outs), (ins imm8:$opA, reladdr8:$opB),
+  "CJNE", "A, #$opA, $opB", [(MCS51CJNE ACC, imm8:$opA, bb:$opB)]>;
+  // TODO: CJNE A, Dir8, rel8
+  //       CJNE @Ri, #imm8, rel8
+}
 
 // Conditional branches
 let Uses = [ACC] in {

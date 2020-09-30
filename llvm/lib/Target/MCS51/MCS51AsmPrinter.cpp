@@ -65,55 +65,60 @@ void MCS51AsmPrinter::emitInstruction(const MachineInstr *MI) {
   switch (MI->getOpcode()) {
   default:
     break;
+  case MCS51::MOVAnyImm: {
+    Register Rd = MI->getOperand(0).getReg();
+    MCInst MovInst;
+    MCOperand MCSrc;
+    if (Rd == MCS51::ACC) {
+      MovInst.setOpcode(MCS51::MOVAImm8);
+    } else {
+      MovInst.setOpcode(MCS51::MOVRnImm8);
+      MCOperand MCDst;
+      lowerOperand(MI->getOperand(0), MCDst);
+      MovInst.addOperand(MCDst);
+    }
+    lowerOperand(MI->getOperand(1), MCSrc);
+    MovInst.addOperand(MCSrc);
+    EmitToStreamer(*OutStreamer, MovInst);
+    return;
+  }
   case MCS51::MOVAnyDirect: {
     Register Rd = MI->getOperand(0).getReg();
+    MCInst MovInst;
+    MCOperand MCSrc;
     if (Rd == MCS51::ACC) {
       // translate load pseudo-move into MOV A, <direct>
-      MCInst MovInst;
-      MCOperand MCSrc;
       MovInst.setOpcode(MCS51::MOVADir);
-      lowerOperand(MI->getOperand(1), MCSrc);
-      MovInst.addOperand(MCSrc);
-      EmitToStreamer(*OutStreamer, MovInst);
-      return;
     } else {
       // translate load pseudo-move into MOV Rn, <direct>
-      MCInst MovInst;
-      MCOperand MCSrc, MCDst;
+      MCOperand MCDst;
       MovInst.setOpcode(MCS51::MOVRnDir);
       lowerOperand(MI->getOperand(0), MCDst);
-      lowerOperand(MI->getOperand(1), MCSrc);
       MovInst.addOperand(MCDst);
-      MovInst.addOperand(MCSrc);
-      EmitToStreamer(*OutStreamer, MovInst);
-      return;
     }
-    break;
+    lowerOperand(MI->getOperand(1), MCSrc);
+    MovInst.addOperand(MCSrc);
+    EmitToStreamer(*OutStreamer, MovInst);
+    return;
   }
   case MCS51::MOVDirectAny: {
     Register Rs = MI->getOperand(1).getReg();
+    MCInst MovInst;
+    MCOperand MCDst;
+    lowerOperand(MI->getOperand(0), MCDst);
+    MovInst.addOperand(MCDst);
     if (Rs == MCS51::ACC) {
       // translate store pseudo-move into MOV <direct>, A
-      MCInst MovInst;
-      MCOperand MCDst;
       MovInst.setOpcode(MCS51::MOVDirA);
-      lowerOperand(MI->getOperand(0), MCDst);
-      MovInst.addOperand(MCDst);
-      EmitToStreamer(*OutStreamer, MovInst);
-      return;
     } else {
       // translate store pseudo-move into MOV <direct>, Rn
-      MCInst MovInst;
-      MCOperand MCSrc, MCDst;
+      MCOperand MCSrc;
       MovInst.setOpcode(MCS51::MOVDirRn);
-      lowerOperand(MI->getOperand(0), MCDst);
       lowerOperand(MI->getOperand(1), MCSrc);
-      MovInst.addOperand(MCDst);
       MovInst.addOperand(MCSrc);
-      EmitToStreamer(*OutStreamer, MovInst);
-      return;
     }
-    break;
+    EmitToStreamer(*OutStreamer, MovInst);
+    return;
   }
   }
 
