@@ -106,3 +106,12 @@ MOV 0xBD, A
 ; CHECK-OBJDUMP:      2a: f7            MOV     @R1, A
 ; CHECK-OBJDUMP:      2b: e5 ba         MOV     A, 0xba
 ; CHECK-OBJDUMP:      2d: f5 bd         MOV     0xbd, A
+
+DJNZ R7, .LBB0
+CJNE R3, #42, .LBB0
+; CHECK-INST: DJNZ    R7, .LBB0                       ; encoding: [0xdf,A]
+; CHECK-INST: ;   fixup A - offset: 1, value: .LBB0, kind: FK_PCRel_1
+; CHECK-INST: CJNE    R3, #42, .LBB0                  ; encoding: [0xbb,0x2a,A]
+; CHECK-INST: ;   fixup A - offset: 2, value: .LBB0, kind: FK_PCRel_1
+; CHECK-OBJDUMP: 2f: df ed         DJNZ    R7, .-19
+; CHECK-OBJDUMP: 31: bb 2a ea      CJNE    R3, #42, .-22

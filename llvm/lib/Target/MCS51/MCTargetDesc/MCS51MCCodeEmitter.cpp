@@ -170,8 +170,17 @@ unsigned MCS51MCCodeEmitter::encodeRelBrTarget(const MCInst &MI, unsigned OpNo,
   const MCOperand &MO = MI.getOperand(OpNo);
 
   if (MO.isExpr()) {
-    Fixups.push_back(
-        MCFixup::create(1, MO.getExpr(), MCFixupKind(FK_PCRel_1), MI.getLoc()));
+    int Offset = 1;
+    switch (MI.getOpcode()) {
+    default:
+      break;
+    case MCS51::CJNE:
+      Offset = 2;
+      break;
+    }
+
+    Fixups.push_back(MCFixup::create(Offset, MO.getExpr(),
+                                     MCFixupKind(FK_PCRel_1), MI.getLoc()));
     return 0;
   }
 
