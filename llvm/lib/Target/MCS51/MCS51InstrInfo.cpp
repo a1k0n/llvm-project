@@ -219,3 +219,10 @@ bool MCS51InstrInfo::reverseBranchCondition(
              Cond[0].dump());
   return true;
 }
+
+bool MCS51InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr &MI,
+                                                     AAResults *AA) const {
+  // this should only be called for CLRs
+  LLVM_DEBUG(dbgs() << "isReallyTriviallyMaterializable: "; MI.dump());
+  return true;
+}

@@ -50,15 +50,34 @@ void MCS51DAGToDAGISel::Select(SDNode *Node) {
     return;
   }
 
-  /*
-    no custom DAG-DAG transforms
-    SDLoc DL(Node);
+  SDLoc DL(Node);
 
-    switch (Node->getOpcode()) {
-    default:
-      break;
+  switch (Node->getOpcode()) {
+  default:
+    break;
+  case MCS51ISD::SUBB: {
+    SDValue Chain = CurDAG->getEntryNode();  // SDValue(Node, 0);
+    SDValue LHS = Node->getOperand(0);
+    SDValue RHS = Node->getOperand(1);
+    SDValue CarryIn = Node->getOperand(2);
+    SDValue InFlag;
+    Chain = CurDAG->getCopyToReg(Chain, DL, MCS51::ACC, LHS, InFlag);
+    InFlag = Chain.getValue(1);
+    Chain = CurDAG->getCopyToReg(Chain, DL, MCS51::CF, CarryIn, InFlag);
+    InFlag = Chain.getValue(1);
+    SDValue Ops[] = {RHS, InFlag};
+    if (RHS.getOpcode() == ISD::Constant) {
+      SDNode *New = CurDAG->getMachineNode(MCS51::SUBB_Aimm8, DL, MVT::i8, MVT::Glue, Ops);
+      ReplaceNode(Node, New);
+      return;
+    } else {
+      SDNode *New = CurDAG->getMachineNode(MCS51::SUBB_ARn, DL, MVT::i8, MVT::Glue, Ops);
+      ReplaceNode(Node, New);
+      return;
     }
-    */
+  } break; // MCS51ISD::SUBB
+
+  } // switch(opcode)
 
   // Select the default instruction.
   SelectCode(Node);

@@ -21,6 +21,10 @@ def SDTCJNE0 : SDTypeProfile<0, 3, [
   SDTCisSameAs<0, 1>, SDTCisInt<2>,
 ]>;
 
+def SDTDADDC : SDTypeProfile<2, 3, [
+  SDTCisSameAs<0, 1>, SDTCisInt<2>,
+]>;
+
 def MCS51JNZ  : SDNode<"MCS51ISD::JNZ", SDTBr, [SDNPHasChain]>;
 def MCS51JZ   : SDNode<"MCS51ISD::JZ",  SDTBr, [SDNPHasChain]>;
 def MCS51JNC  : SDNode<"MCS51ISD::JNC", SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
@@ -28,7 +32,8 @@ def MCS51JC   : SDNode<"MCS51ISD::JC",  SDTBr, [SDNPHasChain, SDNPOptInGlue]>;
 def MCS51CJNE : SDNode<"MCS51ISD::CJNE", SDTCJNE, [SDNPHasChain]>;
 def MCS51CJNE0 : SDNode<"MCS51ISD::CJNE0", SDTCJNE0, [SDNPHasChain]>;
 def MCS51DJNZ : SDNode<"MCS51ISD::DJNZ", SDTDJNZ, [SDNPHasChain]>;
-def MCS51SUBB : SDNode<"MCS51ISD::SUBB", SDTIntBinOp, [SDNPHasChain]>;
+def MCS51ADDC : SDNode<"MCS51ISD::ADDC", SDTDADDC, []>;
+def MCS51SUBB : SDNode<"MCS51ISD::SUBB", SDTDADDC, []>;
 
 
 class ImmAddrOperand<int width> : AsmOperandClass {
@@ -93,14 +98,14 @@ let Uses = [ACC], Defs = [ACC] in {
     "DEC", "A", [(set ACC, (add ACC, -1))]>;
 }
 
-let Defs = [ACC] in {
+let Defs = [ACC], isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def CLRA : InstNoArgs<0xE4, (outs), (ins), "CLR", "A", [(set ACC, 0)]>;
   let Uses = [ACC] in {
     def CPLA : InstNoArgs<0xF4, (outs), (ins), "CPL", "A", [(set ACC, (xor ACC, -1))]>;
   }
 }
 
-let Defs = [CF] in {
+let Defs = [CF], isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def CLRC : InstNoArgs<0xC3, (outs), (ins), "CLR", "C", [(set CF, 0)]>;
 }
 
@@ -111,6 +116,13 @@ multiclass alu_inst<bits<4> opc, string mnemonic, dag op> {
   def _Adir8 : InsDir8<opc, (outs), (ins direct:$a8), mnemonic, "A, $a8", [(set ACC, (op ACC, (load direct:$a8)))]>;
 }
 
+multiclass alu_inst_carry<bits<4> opc, string mnemonic, dag op> {
+  def _ARn : InsARn<opc, (outs), (ins GPRn:$rn), mnemonic, "A, $rn", [(set ACC, CF, (op ACC, GPRn:$rn, CF))]>;
+  def _ARi : InsRi<opc, (outs), (ins GPRi:$ri), mnemonic, "A, @$ri", [(set ACC, CF, (op ACC, GPRi:$ri, CF))]>;
+  def _Aimm8 : InsImm8<opc, (outs), (ins imm8:$imm8), mnemonic, "A, #$imm8", [(set ACC, CF, (op ACC, imm8:$imm8, CF))]>;
+  def _Adir8 : InsDir8<opc, (outs), (ins direct:$a8), mnemonic, "A, $a8", [(set ACC, CF, (op ACC, (load direct:$a8), CF))]>;
+}
+
 let Uses = [ACC], Defs = [ACC] in {
   defm ORL : alu_inst<4, "ORL", or>;
   defm ANL : alu_inst<5, "ANL", and>;
@@ -119,9 +131,9 @@ let Uses = [ACC], Defs = [ACC] in {
 
 let Uses = [ACC], Defs = [ACC, CF] in {
   defm ADD : alu_inst<2, "ADD", add>;
-  let Uses = [CF] in {
-    defm ADDC : alu_inst<3, "ADDC", adde>;
-    defm SUBB : alu_inst<9, "SUBB", MCS51SUBB>;
+  let Uses = [ACC, CF] in {
+    defm ADDC : alu_inst_carry<3, "ADDC", MCS51ADDC>;
+    defm SUBB : alu_inst_carry<9, "SUBB", MCS51SUBB>;
   }
 }
 
@@ -144,7 +156,7 @@ let mayLoad = 1, mayStore = 1 in {
 // stores together; the actual instruction encoding will be chosen in pseudo
 // expansion. This gives the register allocator more room to deal with loads and
 // stores.
-let isPseudo = 1, isCodeGenOnly = 1 in {
+let isPseudo = 1, isCodeGenOnly = 1, isAsCheapAsAMove = 1 in {
   def MOVAnyImm : MCS51Inst<(outs GPMovable:$dst), (ins imm8:$imm8),
     "MOV", "$dst, #$imm8", [(set GPMovable:$dst, imm8:$imm8)]>;
   let mayLoad = 1 in {

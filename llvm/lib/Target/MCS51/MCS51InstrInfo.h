@@ -46,6 +46,9 @@ public:
 
   bool
   reverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
+
+protected:
+  bool isReallyTriviallyReMaterializable(const MachineInstr &MI, AAResults *AA) const override;
 };
 }
 

@@ -32,5 +32,8 @@ define i8 @add(i8 %a, i8 %b) nounwind {
   ret i8 %1
 }
 
-; define i8 @sub(i8 %a, i8 %b) nounwind {
-; }
+define i8 @sub(i8 %a, i8 %b, i8 %c) nounwind {
+  %1 = sub i8 %a, %b
+  %2 = sub i8 %1, %c
+  ret i8 %1
+}

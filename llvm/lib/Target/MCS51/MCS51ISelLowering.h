@@ -36,6 +36,7 @@ enum NodeType : unsigned {
   ADD,
   ADDC,
   SUBB,
+  CLRC,
 };
 }
 

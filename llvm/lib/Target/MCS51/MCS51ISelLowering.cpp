@@ -45,6 +45,7 @@ MCS51TargetLowering::MCS51TargetLowering(const TargetMachine &TM,
   addRegisterClass(MVT::i8, &MCS51::ACCClassRegClass);
   addRegisterClass(MVT::i8, &MCS51::SPClassRegClass);
   addRegisterClass(MVT::i8, &MCS51::GPRAnyRegClass);
+  addRegisterClass(MVT::i1, &MCS51::FlagsRegClass);
 
   addRegisterClass(MVT::i16, &MCS51::DPTRClassRegClass);
 
@@ -60,7 +61,8 @@ MCS51TargetLowering::MCS51TargetLowering(const TargetMachine &TM,
 
   // TODO: take care of carrying addition / borrowing subtraction
   // setOperationAction(ISD::ADDC, MVT::i8, Custom);
-  // setOperationAction(ISD::SUB, MVT::i8, Custom);
+  setOperationAction(ISD::SUB, MVT::i8, Custom);
+  setOperationAction(ISD::SUBCARRY, MVT::i8, Custom);
 
   // not totally sure about this; it almost doesn't matter if CF is used for
   // bool returns
@@ -73,16 +75,30 @@ MCS51TargetLowering::MCS51TargetLowering(const TargetMachine &TM,
 
 SDValue MCS51TargetLowering::LowerOperation(SDValue Op,
                                             SelectionDAG &DAG) const {
+  SDLoc Dl(Op);
   switch (Op.getOpcode()) {
   default:
     report_fatal_error("unimplemented operand");
+  case ISD::SUB:
+    // transform SUB -> SUBCARRY with carryin=0, as we can only natively do
+    // subtract-with-borrow
+    return DAG
+        .getNode(MCS51ISD::SUBB, Dl, DAG.getVTList(MVT::i8, MVT::i1), Op.getOperand(0),
+                 Op.getOperand(1), DAG.getConstant(0, Dl, MVT::i1))
+        .getValue(0);
+  case ISD::SUBCARRY: {
+    SDValue LHS = Op.getOperand(0);
+    SDValue RHS = Op.getOperand(1);
+    SDValue CarryIn = Op.getOperand(2);
+    return DAG.getNode(MCS51ISD::SUBB, Dl, DAG.getVTList(MVT::i8, MVT::i1), LHS,
+                       RHS, CarryIn);
+  } break; // ISD::SUB
   case ISD::BR_CC: {
     SDValue Chain = Op.getOperand(0);
     ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
     SDValue LHS = Op.getOperand(2);
     SDValue RHS = Op.getOperand(3);
     SDValue Dest = Op.getOperand(4);
-    SDLoc Dl(Op);
     if (LHS.getOpcode() == ISD::Constant) {
       std::swap(LHS, RHS);
     }
@@ -256,7 +272,6 @@ MCS51TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     RetOps.push_back(Flag);
   }
 
-  // FIXME: ok, what's ISD?
   return DAG.getNode(MCS51ISD::RET_FLAG, DL, MVT::Other, RetOps);
 }
 
