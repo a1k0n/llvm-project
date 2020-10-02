@@ -47,6 +47,12 @@ def addr16 : Operand<OtherVT> {
   let EncoderMethod = "encodeAbsBrTarget";
 }
 
+def bitaddr8 : Operand<i8>, ImmLeaf<i8, [{return isInt<8>(Imm);}]> {
+  // addrspace?
+  // decode SFR bits?
+  // also hex?
+}
+
 def imm8 : Operand<i8>, ImmLeaf<i8, [{return isInt<8>(Imm);}]> {
   // also hex?
 }
@@ -112,14 +118,14 @@ let Defs = [CF], isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 multiclass alu_inst<bits<4> opc, string mnemonic, dag op> {
   def _ARn : InsARn<opc, (outs), (ins GPRn:$rn), mnemonic, "A, $rn", [(set ACC, (op ACC, GPRn:$rn))]>;
   def _ARi : InsRi<opc, (outs), (ins GPRi:$ri), mnemonic, "A, @$ri", [(set ACC, (op ACC, GPRi:$ri))]>;
-  def _Aimm8 : InsImm8<opc, (outs), (ins imm8:$imm8), mnemonic, "A, #$imm8", [(set ACC, (op ACC, imm8:$imm8))]>;
+  def _Aimm8 : InsAImm8<opc, (outs), (ins imm8:$imm8), mnemonic, "A, #$imm8", [(set ACC, (op ACC, imm8:$imm8))]>;
   def _Adir8 : InsDir8<opc, (outs), (ins direct:$a8), mnemonic, "A, $a8", [(set ACC, (op ACC, (load direct:$a8)))]>;
 }
 
 multiclass alu_inst_carry<bits<4> opc, string mnemonic, dag op> {
   def _ARn : InsARn<opc, (outs), (ins GPRn:$rn), mnemonic, "A, $rn", [(set ACC, CF, (op ACC, GPRn:$rn, CF))]>;
   def _ARi : InsRi<opc, (outs), (ins GPRi:$ri), mnemonic, "A, @$ri", [(set ACC, CF, (op ACC, GPRi:$ri, CF))]>;
-  def _Aimm8 : InsImm8<opc, (outs), (ins imm8:$imm8), mnemonic, "A, #$imm8", [(set ACC, CF, (op ACC, imm8:$imm8, CF))]>;
+  def _Aimm8 : InsAImm8<opc, (outs), (ins imm8:$imm8), mnemonic, "A, #$imm8", [(set ACC, CF, (op ACC, imm8:$imm8, CF))]>;
   def _Adir8 : InsDir8<opc, (outs), (ins direct:$a8), mnemonic, "A, $a8", [(set ACC, CF, (op ACC, (load direct:$a8), CF))]>;
 }
 
@@ -187,7 +193,7 @@ let mayStore = 1 in {
 let Defs = [ACC] in {
   def MOVADir  : InsDir8<0xE, (outs), (ins direct:$a8),
     "MOV", "A, $a8", [(set ACC, (load direct:$a8))]>;
-  def MOVAImm8 : InsImm8<0x7, (outs), (ins imm8:$imm8),
+  def MOVAImm8 : InsAImm8<0x7, (outs), (ins imm8:$imm8),
     "MOV", "A, #$imm8", [(set ACC, imm8:$imm8)]>;
   def MOVARn   : InsARn<0xE, (outs), (ins GPRn:$rn),
     "MOV", "A, $rn", [(set ACC, GPRn:$rn)]>;
@@ -202,6 +208,15 @@ let Uses = [ACC] in {
     "MOV", "$rn, A", [(set GPRn:$rn, ACC)]>;
   def MOVRiA  : InsRi<0xF, (outs), (ins GPRi:$ri),
     "MOV", "@$ri, A", [(store ACC, GPRi:$ri)]>;
+}
+
+let Defs = [CF] in {
+  def MOVCbit : InsImm8<0xA2, (outs), (ins bitaddr8:$imm8),
+    "MOV", "C, bit $imm8", [(set CF, (load bitaddr8:$imm8))]>;
+}
+let Uses = [CF] in {
+  def MOVbitC : InsImm8<0x92, (outs), (ins bitaddr8:$imm8),
+    "MOV", "bit $imm8, C", [(store CF, bitaddr8:$imm8)]>;
 }
 
 // TODO: ACALL / AJMP are somewhat unlikely to be used by the compiler but

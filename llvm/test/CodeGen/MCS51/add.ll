@@ -32,8 +32,23 @@ define i8 @add(i8 %a, i8 %b) nounwind {
   ret i8 %1
 }
 
-define i8 @sub(i8 %a, i8 %b, i8 %c) nounwind {
+define i8 @sub(i8 %a, i8 %b, i8 %c, i8 %d) nounwind {
+; MCS51-LABEL: sub:
+; MCS51:       ; %bb.0:
+; MCS51-NEXT:    MOV A, R7
+; MCS51-NEXT:    CLR C
+; MCS51-NEXT:    MOV bit 8, C
+; MCS51-NEXT:    SUBB A, R6
+; MCS51-NEXT:    MOV R0, A
+; MCS51-NEXT:    MOV A, R5
+; MCS51-NEXT:    MOV C, bit 8
+; MCS51-NEXT:    SUBB A, R4
+; MCS51-NEXT:    MOV R7, A
+; MCS51-NEXT:    MOV A, R0
+; MCS51-NEXT:    ADD A, R7
+; MCS51-NEXT:    RET
   %1 = sub i8 %a, %b
-  %2 = sub i8 %1, %c
-  ret i8 %1
+  %2 = sub i8 %c, %d
+  %3 = add i8 %1, %2
+  ret i8 %3
 }

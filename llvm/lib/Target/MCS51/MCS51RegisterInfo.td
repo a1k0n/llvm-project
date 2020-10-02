@@ -14,8 +14,10 @@ def PC : Register<"PC">;
 def SP : Register<"SP">;
 
 // carry flag
+class BitReg<bits<8> bitaddr, string name> : Register<name>;
+
 def CF : Register<"CF">;
-def CFslack : Register<"CF'">;
+def CFslack : BitReg<0x08, "CF'">;
 
 }  // Namespace = "MCS51"
 

@@ -66,15 +66,11 @@ void MCS51DAGToDAGISel::Select(SDNode *Node) {
     Chain = CurDAG->getCopyToReg(Chain, DL, MCS51::CF, CarryIn, InFlag);
     InFlag = Chain.getValue(1);
     SDValue Ops[] = {RHS, InFlag};
-    if (RHS.getOpcode() == ISD::Constant) {
-      SDNode *New = CurDAG->getMachineNode(MCS51::SUBB_Aimm8, DL, MVT::i8, MVT::Glue, Ops);
-      ReplaceNode(Node, New);
-      return;
-    } else {
-      SDNode *New = CurDAG->getMachineNode(MCS51::SUBB_ARn, DL, MVT::i8, MVT::Glue, Ops);
-      ReplaceNode(Node, New);
-      return;
-    }
+    unsigned Opcode =
+        RHS.getOpcode() == ISD::Constant ? MCS51::SUBB_Aimm8 : MCS51::SUBB_ARn;
+    SDNode *New = CurDAG->getMachineNode(Opcode, DL, MVT::i8, MVT::Glue, Ops);
+    ReplaceNode(Node, New);
+    return;
   } break; // MCS51ISD::SUBB
 
   } // switch(opcode)

@@ -40,6 +40,7 @@ void MCS51InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     if (MCS51::GPRnRegClass.contains(SrcReg)) {
       BuildMI(MBB, MBBI, DL, get(MCS51::MOVARn))
           .addReg(SrcReg, getKillRegState(KillSrc));
+      return;
     } else {
       // FIXME
       llvm_unreachable("trying to move non-Rn into A unimplemented");
@@ -47,13 +48,27 @@ void MCS51InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   } else if (SrcReg == MCS51::ACC) {
     if (MCS51::GPRnRegClass.contains(DstReg)) {
       BuildMI(MBB, MBBI, DL, get(MCS51::MOVRnA), DstReg);
+      return;
     } else {
       llvm_unreachable("trying to move non-Rn into A unimplemented");
     }
   } else if (MCS51::GPRnRegClass.contains(SrcReg, DstReg)) {
     BuildMI(MBB, MBBI, DL, get(MCS51::MOVRnRn), DstReg)
         .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  } else if (SrcReg == MCS51::CF) {
+    if (DstReg == MCS51::CFslack) {
+      BuildMI(MBB, MBBI, DL, get(MCS51::MOVbitC)).addImm(0x08);
+      return;
+    }
+  } else if (DstReg == MCS51::CF) {
+    if (SrcReg == MCS51::CFslack) {
+      BuildMI(MBB, MBBI, DL, get(MCS51::MOVCbit)).addImm(0x08);
+      return;
+    }
   }
+  LLVM_DEBUG(dbgs() << "copyPhysReg " << DstReg << " <- " << SrcReg << "\n");
+  llvm_unreachable("unimplemented copyPhysReg x, y");
 }
 
 bool MCS51InstrInfo::analyzeBranch(MachineBasicBlock &MBB,
