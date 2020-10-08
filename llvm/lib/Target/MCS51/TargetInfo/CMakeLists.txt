@@ -1,3 +1,3 @@
-add_llvm_library(LLVMMCS51Info
+add_llvm_component_library(LLVMMCS51Info
   MCS51TargetInfo.cpp
   )

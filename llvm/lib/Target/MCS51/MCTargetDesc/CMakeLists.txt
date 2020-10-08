@@ -1,4 +1,4 @@
-add_llvm_library(LLVMMCS51Desc
+add_llvm_component_library(LLVMMCS51Desc
   MCS51AsmBackend.cpp
   MCS51ELFObjectWriter.cpp
   MCS51MCAsmInfo.cpp

@@ -1,3 +1,3 @@
-add_llvm_library(LLVMMCS51Disassembler
+add_llvm_component_library(LLVMMCS51Disassembler
   MCS51Disassembler.cpp
   )
